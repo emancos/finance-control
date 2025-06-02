@@ -1,14 +1,16 @@
-import { View, StyleSheet, ScrollView, SafeAreaView } from "react-native"
+import { View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from "react-native"
+import { Plus } from "lucide-react-native"
 
 import Header from "../components/header"
 import FinancialCards from "../components/financial-card"
 import TransactionsList from "../components/transactions-list"
+import { useNavigation } from "@react-navigation/native"
 
 const DashboardScreen = () => {
-    // Sample data for the dashboard
+    const navigation = useNavigation()
+
     const userData = {
-        name: "Marina",
-        profileImage: "https://randomuser.me/api/portraits/women/68.jpg",
+        name: "Emanuel",
     }
 
     const financialData = [
@@ -70,15 +72,24 @@ const DashboardScreen = () => {
         },
     ]
 
+    const handleAddTransaction = () => {
+        navigation.navigate("AddTransaction" as never)
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.dashboard}>
-                <Header name={userData.name} profileImage={userData.profileImage} />
+                <Header name={userData.name} />
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                     <FinancialCards data={financialData} />
                     <TransactionsList transactions={transactions} />
                 </ScrollView>
+
+                {/* Floating Action Button */}
+                <TouchableOpacity style={styles.fab} onPress={handleAddTransaction} activeOpacity={0.8}>
+                    <Plus color="#fff" size={24} />
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     )
@@ -96,6 +107,22 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
+    },
+    fab: {
+        position: "absolute",
+        bottom: 20,
+        right: 20,
+        backgroundColor: "#009688",
+        borderRadius: 28,
+        width: 56,
+        height: 56,
+        justifyContent: "center",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
     },
 })
 
