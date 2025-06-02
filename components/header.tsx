@@ -2,14 +2,13 @@ import { View, Text, Image, StyleSheet } from "react-native"
 
 interface HeaderProps {
     name: string
-    profileImage: string
 }
 
-const Header = ({ name, profileImage }: HeaderProps) => {
+const Header = ({ name }: HeaderProps) => {
     return (
         <View style={styles.header}>
             <Text style={styles.greeting}>Olá, {name}</Text>
-            <Image style={styles.profilePhoto} source={{ uri: profileImage }} />
+            <Image style={styles.profilePhoto} source={require("../assets/profile-photo.png")} />
         </View>
     )
 }
