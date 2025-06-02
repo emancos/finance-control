@@ -7,7 +7,6 @@ export interface Transaction {
     value: string
     date: string
     type: "positive" | "negative"
-    // Adding more fields that would be shown in the detail screen
     category?: string
     time?: string
     paymentMethod?: string
