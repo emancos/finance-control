@@ -31,7 +31,7 @@ Este projeto foi construído utilizando tecnologias modernas para o desenvolvime
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/emancos/finance-control.git](https://github.com/emancos/finance-control.git)
+    git clone https://github.com/emancos/finance-control.git
     ```
 2.  **Navegue até a pasta do projeto:**
     ```bash
