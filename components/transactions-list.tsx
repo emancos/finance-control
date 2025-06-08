@@ -56,14 +56,11 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#1e1e1e",
+        backgroundColor: "rgb(40 40 40)",
         padding: 16,
-        borderRadius: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.8,
-        shadowRadius: 8,
-        elevation: 5,
+        borderRadius: 16,
+        elevation: 4,
+        overflow: 'hidden',
     },
     title: {
         marginBottom: 12,

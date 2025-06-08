@@ -28,14 +28,10 @@ const FinancialCards = ({ data }: FinancialCardsProps) => {
 
 const styles = StyleSheet.create({
     cardContainer: {
-        backgroundColor: "#1e1e1e",
+        backgroundColor: "rgb(40 40 40)",
         borderRadius: 16,
         padding: 12,
         marginBottom: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.7,
-        shadowRadius: 4,
         elevation: 4,
     },
     row: {
