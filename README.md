@@ -25,7 +25,7 @@ Este projeto foi construído utilizando tecnologias modernas para o desenvolvime
 -   **[TypeScript](https://www.typescriptlang.org/)**: Superset do JavaScript que adiciona tipagem estática ao código, aumentando a robustez e a manutenibilidade.
 -   **[React Navigation](https://reactnavigation.org/)**: Biblioteca para gerenciamento de navegação e empilhamento de telas.
 -   **[Lucide React Native](https://lucide.dev/)**: Biblioteca de ícones.
--   **[React Native Element Dropdown](https://github.com/hoangnam-nguyen/react-native-element-dropdown)**: Componente de dropdown customizável usado nos formulários.
+-   **[React Native Element Dropdown](https://github.com/hoaphantn7604/react-native-element-dropdown)**: Componente de dropdown customizável usado nos formulários.
 
 ## Como Executar o Projeto
 
