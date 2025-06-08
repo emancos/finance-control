@@ -14,7 +14,7 @@ import {
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react-native"
-import { Picker } from "@react-native-picker/picker"
+import { Dropdown } from "react-native-element-dropdown"
 
 interface Person {
     id: string
@@ -29,10 +29,14 @@ const AddTransactionScreen = () => {
     const [description, setDescription] = useState("")
     const [totalAmount, setTotalAmount] = useState("")
     const [category, setCategory] = useState("supermercado")
+    const [isCategoryFocus, setIsCategoryFocus] = useState(false);
     const [paymentType, setPaymentType] = useState("vista")
+    const [isPaymentTypeFocus, setIsPaymentTypeFocus] = useState(false);
     const [installments, setInstallments] = useState("2")
+    const [isInstallmentsFocus, setIsInstallmentsFocus] = useState(false);
     const [isCollective, setIsCollective] = useState(false)
     const [people, setPeople] = useState<Person[]>([{ id: "1", name: "", amount: "" }])
+
 
     const categories = [
         { label: "Supermercado", value: "supermercado" },
@@ -47,6 +51,11 @@ const AddTransactionScreen = () => {
         { label: "Vestuário", value: "vestuario" },
         { label: "Outros", value: "outros" },
     ]
+
+    const paymentTypeData = [
+        { label: "À Vista", value: "vista" },
+        { label: "Parcelado", value: "parcelado" },
+    ];
 
     const installmentOptions = Array.from({ length: 12 }, (_, i) => ({
         label: `${i + 1}x`,
@@ -115,7 +124,6 @@ const AddTransactionScreen = () => {
     const handleSubmit = () => {
         if (!validateForm()) return
 
-        // Here you would save the transaction
         Alert.alert("Sucesso", "Transação adicionada com sucesso!", [{ text: "OK", onPress: () => navigation.goBack() }])
     }
 
@@ -157,52 +165,83 @@ const AddTransactionScreen = () => {
                 {/* Categoria */}
                 <View style={styles.formGroup}>
                     <Text style={styles.label}>Categoria</Text>
-                    <View style={styles.pickerContainer}>
-                        <Picker
-                            selectedValue={category}
-                            onValueChange={setCategory}
-                            style={styles.picker}
-                            dropdownIconColor="#00bfa5"
-                        >
-                            {categories.map((cat) => (
-                                <Picker.Item key={cat.value} label={cat.label} value={cat.value} color="#e0e0e0" />
-                            ))}
-                        </Picker>
-                    </View>
+                    <Dropdown
+                        style={[styles.dropdown, isCategoryFocus && { borderColor: '#00bfa5' }]}
+                        placeholderStyle={styles.placeholderStyle}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropdownContainer}
+                        itemContainerStyle={styles.itemContainer}
+                        itemTextStyle={styles.itemText}
+                        activeColor="rgb(50, 50, 50)"
+                        iconStyle={styles.iconStyle}
+                        data={categories}
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={!isCategoryFocus ? 'Selecione a categoria' : '...'}
+                        value={category}
+                        onFocus={() => setIsCategoryFocus(true)}
+                        onBlur={() => setIsCategoryFocus(false)}
+                        onChange={item => {
+                            setCategory(item.value);
+                            setIsCategoryFocus(false);
+                        }}
+                    />
                 </View>
 
                 {/* Tipo de Pagamento */}
                 <View style={styles.formGroup}>
                     <Text style={styles.label}>Tipo de Pagamento</Text>
-                    <View style={styles.pickerContainer}>
-                        <Picker
-                            selectedValue={paymentType}
-                            onValueChange={setPaymentType}
-                            style={styles.picker}
-                            dropdownIconColor="#00bfa5"
-                        >
-                            <Picker.Item label="À Vista" value="vista" color="#e0e0e0" />
-                            <Picker.Item label="Parcelado" value="parcelado" color="#e0e0e0" />
-                        </Picker>
-                    </View>
+                    <Dropdown
+                        style={[styles.dropdown, isPaymentTypeFocus && { borderColor: '#00bfa5' }]}
+                        placeholderStyle={styles.placeholderStyle}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropdownContainer}
+                        itemContainerStyle={styles.itemContainer}
+                        itemTextStyle={styles.itemText}
+                        activeColor="rgb(50, 50, 50)"
+                        iconStyle={styles.iconStyle}
+                        data={paymentTypeData}
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={!isPaymentTypeFocus ? 'Selecione o tipo de pagamento' : '...'}
+                        value={paymentType}
+                        onFocus={() => setIsPaymentTypeFocus(true)}
+                        onBlur={() => setIsPaymentTypeFocus(false)}
+                        onChange={item => {
+                            setPaymentType(item.value);
+                            setIsPaymentTypeFocus(false);
+                        }}
+                    />
                 </View>
 
                 {/* Parcelas (se parcelado) */}
                 {paymentType === "parcelado" && (
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Número de Parcelas</Text>
-                        <View style={styles.pickerContainer}>
-                            <Picker
-                                selectedValue={installments}
-                                onValueChange={setInstallments}
-                                style={styles.picker}
-                                dropdownIconColor="#00bfa5"
-                            >
-                                {installmentOptions.map((option) => (
-                                    <Picker.Item key={option.value} label={option.label} value={option.value} color="#e0e0e0" />
-                                ))}
-                            </Picker>
-                        </View>
+                        <Dropdown
+                            style={[styles.dropdown, isInstallmentsFocus && { borderColor: '#00bfa5' }]}
+                            placeholderStyle={styles.placeholderStyle}
+                            selectedTextStyle={styles.selectedTextStyle}
+                            containerStyle={styles.dropdownContainer}
+                            itemContainerStyle={styles.itemContainer}
+                            itemTextStyle={styles.itemText}
+                            activeColor="rgb(50, 50, 50)"
+                            iconStyle={styles.iconStyle}
+                            data={installmentOptions}
+                            maxHeight={300}
+                            labelField="label"
+                            valueField="value"
+                            placeholder={!isInstallmentsFocus ? 'Selecione o número de parcelas' : '...'}
+                            value={installments}
+                            onFocus={() => setIsInstallmentsFocus(true)}
+                            onBlur={() => setIsInstallmentsFocus(false)}
+                            onChange={item => {
+                                setInstallments(item.value);
+                                setIsInstallmentsFocus(false);
+                            }}
+                        />
                         <Text style={styles.installmentInfo}>Valor por parcela: R$ {calculateInstallmentValue()}</Text>
                     </View>
                 )}
@@ -307,7 +346,7 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
     input: {
-        backgroundColor: "#1e1e1e",
+        backgroundColor: "rgb(40 40 40)",
         borderRadius: 12,
         padding: 12,
         fontSize: 16,
@@ -315,15 +354,37 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#333",
     },
-    pickerContainer: {
-        backgroundColor: "#1e1e1e",
+    dropdown: {
+        height: 55,
+        backgroundColor: 'rgb(40 40 40)',
         borderRadius: 12,
+        padding: 12,
         borderWidth: 1,
-        borderColor: "#333",
+        borderColor: '#333',
     },
-    picker: {
-        color: "#e0e0e0",
-        backgroundColor: "#1e1e1e",
+    dropdownContainer: {
+        backgroundColor: 'rgb(40 40 40)',
+        borderRadius: 12,
+        borderWidth: 0,
+        marginTop: 4,
+    },
+    itemContainer: {
+        borderRadius: 12,
+    },
+    itemText: {
+        color: '#e0e0e0',
+    },
+    placeholderStyle: {
+        fontSize: 16,
+        color: '#777',
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#e0e0e0',
+    },
+    iconStyle: {
+        width: 20,
+        height: 20,
     },
     installmentInfo: {
         marginTop: 8,
@@ -343,7 +404,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     addButton: {
-        backgroundColor: "#1e1e1e",
+        backgroundColor: "rgb(40 40 40)",
         borderRadius: 20,
         padding: 8,
         borderWidth: 1,
