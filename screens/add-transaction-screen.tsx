@@ -11,52 +11,43 @@ import {
     TextInput,
     Switch,
     Alert,
+    ActivityIndicator,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react-native"
 import { Dropdown } from "react-native-element-dropdown"
-
-interface Person {
-    id: string
-    name: string
-    amount: string
-}
+import { useTransactions } from "../hooks/use-transactions"
+import { getCategoryOptions } from "../utils/category-icons"
+import type { Person } from "../types/transaction"
 
 const AddTransactionScreen = () => {
     const navigation = useNavigation()
+    const { addTransaction } = useTransactions()
+    const [isSaving, setIsSaving] = useState(false)
 
     // Form state
     const [description, setDescription] = useState("")
     const [totalAmount, setTotalAmount] = useState("")
     const [category, setCategory] = useState("supermercado")
-    const [isCategoryFocus, setIsCategoryFocus] = useState(false);
+    const [isCategoryFocus, setIsCategoryFocus] = useState(false)
     const [paymentType, setPaymentType] = useState("vista")
-    const [isPaymentTypeFocus, setIsPaymentTypeFocus] = useState(false);
+    const [isPaymentTypeFocus, setIsPaymentTypeFocus] = useState(false)
     const [installments, setInstallments] = useState("2")
-    const [isInstallmentsFocus, setIsInstallmentsFocus] = useState(false);
+    const [isInstallmentsFocus, setIsInstallmentsFocus] = useState(false)
     const [isCollective, setIsCollective] = useState(false)
     const [people, setPeople] = useState<Person[]>([{ id: "1", name: "", amount: "" }])
+    const [date, setDate] = useState(new Date().toLocaleDateString("pt-BR"))
+    const [time, setTime] = useState(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }))
+    const [notes, setNotes] = useState("")
 
-
-    const categories = [
-        { label: "Supermercado", value: "supermercado" },
-        { label: "Veículo", value: "veiculo" },
-        { label: "Farmácia", value: "farmacia" },
-        { label: "Lazer", value: "lazer" },
-        { label: "Alimentação", value: "alimentacao" },
-        { label: "Moradia", value: "moradia" },
-        { label: "Saúde", value: "saude" },
-        { label: "Educação", value: "educacao" },
-        { label: "Transporte", value: "transporte" },
-        { label: "Vestuário", value: "vestuario" },
-        { label: "Outros", value: "outros" },
-    ]
+    const categories = getCategoryOptions()
 
     const paymentTypeData = [
         { label: "À Vista", value: "vista" },
         { label: "Parcelado", value: "parcelado" },
-    ];
+    ]
 
+    // Opções de parcelamento
     const installmentOptions = Array.from({ length: 12 }, (_, i) => ({
         label: `${i + 1}x`,
         value: (i + 1).toString(),
@@ -70,6 +61,7 @@ const AddTransactionScreen = () => {
         return (total / installmentCount).toFixed(2).replace(".", ",")
     }
 
+    // Pessoa compras coletivas
     const addPerson = () => {
         const newPerson: Person = {
             id: Date.now().toString(),
@@ -121,10 +113,44 @@ const AddTransactionScreen = () => {
         return true
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateForm()) return
 
-        Alert.alert("Sucesso", "Transação adicionada com sucesso!", [{ text: "OK", onPress: () => navigation.goBack() }])
+        setIsSaving(true)
+
+        try {
+            // Preparar os dados da transação
+            const transactionData = {
+                description,
+                value: `- R$ ${totalAmount}`,
+                date,
+                type: "negative" as const,
+                category,
+                time,
+                paymentMethod: paymentType === "vista" ? "À Vista" : `Parcelado ${installments}x`,
+                notes,
+                installments: paymentType === "parcelado" ? Number.parseInt(installments) : undefined,
+                installmentValue: paymentType === "parcelado" ? calculateInstallmentValue() : undefined,
+                isCollective,
+                people: isCollective ? people : undefined,
+            }
+
+            // Salvar a transação
+            const success = await addTransaction(transactionData)
+
+            if (success) {
+                Alert.alert("Sucesso", "Transação adicionada com sucesso!", [
+                    { text: "OK", onPress: () => navigation.goBack() },
+                ])
+            } else {
+                Alert.alert("Erro", "Não foi possível salvar a transação. Tente novamente.")
+            }
+        } catch (error) {
+            console.error("Erro ao salvar transação:", error)
+            Alert.alert("Erro", "Ocorreu um erro ao salvar a transação.")
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     return (
@@ -162,11 +188,32 @@ const AddTransactionScreen = () => {
                     />
                 </View>
 
+                {/* Data e Hora */}
+                <View style={styles.formGroup}>
+                    <Text style={styles.label}>Data e Hora</Text>
+                    <View style={styles.dateTimeContainer}>
+                        <TextInput
+                            style={[styles.input, styles.dateInput]}
+                            placeholder="DD/MM/AAAA"
+                            placeholderTextColor="#777"
+                            value={date}
+                            onChangeText={setDate}
+                        />
+                        <TextInput
+                            style={[styles.input, styles.timeInput]}
+                            placeholder="HH:MM"
+                            placeholderTextColor="#777"
+                            value={time}
+                            onChangeText={setTime}
+                        />
+                    </View>
+                </View>
+
                 {/* Categoria */}
                 <View style={styles.formGroup}>
                     <Text style={styles.label}>Categoria</Text>
                     <Dropdown
-                        style={[styles.dropdown, isCategoryFocus && { borderColor: '#00bfa5' }]}
+                        style={[styles.dropdown, isCategoryFocus && { borderColor: "#00bfa5" }]}
                         placeholderStyle={styles.placeholderStyle}
                         selectedTextStyle={styles.selectedTextStyle}
                         containerStyle={styles.dropdownContainer}
@@ -178,13 +225,13 @@ const AddTransactionScreen = () => {
                         maxHeight={300}
                         labelField="label"
                         valueField="value"
-                        placeholder={!isCategoryFocus ? 'Selecione a categoria' : '...'}
+                        placeholder={!isCategoryFocus ? "Selecione a categoria" : "..."}
                         value={category}
                         onFocus={() => setIsCategoryFocus(true)}
                         onBlur={() => setIsCategoryFocus(false)}
-                        onChange={item => {
-                            setCategory(item.value);
-                            setIsCategoryFocus(false);
+                        onChange={(item) => {
+                            setCategory(item.value)
+                            setIsCategoryFocus(false)
                         }}
                     />
                 </View>
@@ -193,7 +240,7 @@ const AddTransactionScreen = () => {
                 <View style={styles.formGroup}>
                     <Text style={styles.label}>Tipo de Pagamento</Text>
                     <Dropdown
-                        style={[styles.dropdown, isPaymentTypeFocus && { borderColor: '#00bfa5' }]}
+                        style={[styles.dropdown, isPaymentTypeFocus && { borderColor: "#00bfa5" }]}
                         placeholderStyle={styles.placeholderStyle}
                         selectedTextStyle={styles.selectedTextStyle}
                         containerStyle={styles.dropdownContainer}
@@ -205,13 +252,13 @@ const AddTransactionScreen = () => {
                         maxHeight={300}
                         labelField="label"
                         valueField="value"
-                        placeholder={!isPaymentTypeFocus ? 'Selecione o tipo de pagamento' : '...'}
+                        placeholder={!isPaymentTypeFocus ? "Selecione o tipo de pagamento" : "..."}
                         value={paymentType}
                         onFocus={() => setIsPaymentTypeFocus(true)}
                         onBlur={() => setIsPaymentTypeFocus(false)}
-                        onChange={item => {
-                            setPaymentType(item.value);
-                            setIsPaymentTypeFocus(false);
+                        onChange={(item) => {
+                            setPaymentType(item.value)
+                            setIsPaymentTypeFocus(false)
                         }}
                     />
                 </View>
@@ -221,7 +268,7 @@ const AddTransactionScreen = () => {
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Número de Parcelas</Text>
                         <Dropdown
-                            style={[styles.dropdown, isInstallmentsFocus && { borderColor: '#00bfa5' }]}
+                            style={[styles.dropdown, isInstallmentsFocus && { borderColor: "#00bfa5" }]}
                             placeholderStyle={styles.placeholderStyle}
                             selectedTextStyle={styles.selectedTextStyle}
                             containerStyle={styles.dropdownContainer}
@@ -233,13 +280,13 @@ const AddTransactionScreen = () => {
                             maxHeight={300}
                             labelField="label"
                             valueField="value"
-                            placeholder={!isInstallmentsFocus ? 'Selecione o número de parcelas' : '...'}
+                            placeholder={!isInstallmentsFocus ? "Selecione o número de parcelas" : "..."}
                             value={installments}
                             onFocus={() => setIsInstallmentsFocus(true)}
                             onBlur={() => setIsInstallmentsFocus(false)}
-                            onChange={item => {
-                                setInstallments(item.value);
-                                setIsInstallmentsFocus(false);
+                            onChange={(item) => {
+                                setInstallments(item.value)
+                                setIsInstallmentsFocus(false)
                             }}
                         />
                         <Text style={styles.installmentInfo}>Valor por parcela: R$ {calculateInstallmentValue()}</Text>
@@ -302,9 +349,32 @@ const AddTransactionScreen = () => {
                     </View>
                 )}
 
+                {/* Observações */}
+                <View style={styles.formGroup}>
+                    <Text style={styles.label}>Observações</Text>
+                    <TextInput
+                        style={[styles.input, styles.notesInput]}
+                        placeholder="Observações adicionais"
+                        placeholderTextColor="#777"
+                        value={notes}
+                        onChangeText={setNotes}
+                        multiline
+                        numberOfLines={3}
+                        textAlignVertical="top"
+                    />
+                </View>
+
                 {/* Botão Salvar */}
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                    <Text style={styles.submitButtonText}>Adicionar Transação</Text>
+                <TouchableOpacity
+                    style={[styles.submitButton, isSaving && styles.submitButtonDisabled]}
+                    onPress={handleSubmit}
+                    disabled={isSaving}
+                >
+                    {isSaving ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                        <Text style={styles.submitButtonText}>Adicionar Transação</Text>
+                    )}
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -354,16 +424,30 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#333",
     },
+    dateTimeContainer: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    dateInput: {
+        flex: 2,
+    },
+    timeInput: {
+        flex: 1,
+    },
+    notesInput: {
+        minHeight: 80,
+        paddingTop: 12,
+    },
     dropdown: {
         height: 48,
-        backgroundColor: 'rgb(40 40 40)',
+        backgroundColor: "rgb(40 40 40)",
         borderRadius: 12,
         padding: 12,
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: "#333",
     },
     dropdownContainer: {
-        backgroundColor: 'rgb(40 40 40)',
+        backgroundColor: "rgb(40 40 40)",
         borderRadius: 12,
         borderWidth: 0,
         marginTop: 4,
@@ -372,15 +456,15 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     itemText: {
-        color: '#e0e0e0',
+        color: "#e0e0e0",
     },
     placeholderStyle: {
         fontSize: 16,
-        color: '#777',
+        color: "#777",
     },
     selectedTextStyle: {
         fontSize: 16,
-        color: '#e0e0e0',
+        color: "#e0e0e0",
     },
     iconStyle: {
         width: 20,
@@ -444,6 +528,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 20,
         marginBottom: 40,
+    },
+    submitButtonDisabled: {
+        backgroundColor: "#006156",
+        opacity: 0.7,
     },
     submitButtonText: {
         color: "#fff",
