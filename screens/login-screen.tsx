@@ -20,8 +20,7 @@ const LoginScreen = () => {
     const navigation = useNavigation()
 
     const handleLogin = () => {
-        // In a real app, you would validate credentials here
-        navigation.navigate("Dashboard" as never)
+        navigation.navigate("Main" as never)
     }
 
     return (
@@ -31,7 +30,7 @@ const LoginScreen = () => {
                     <Text style={styles.title}>Bem-vindo(a)!</Text>
 
                     <View style={styles.profileContainer}>
-                        <Image style={styles.profilePhoto} source={require('../assets/icon.png')} />
+                        <Image style={styles.profilePhoto} source={require("../assets/icon.png")} />
                     </View>
 
                     <TextInput
