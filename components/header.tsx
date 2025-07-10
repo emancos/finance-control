@@ -19,11 +19,14 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 28,
+        width: "100%",
     },
     greeting: {
         fontSize: 22,
         fontWeight: "600",
         color: "#00bfa5",
+        flex: 1,
+        textAlign: "left",
     },
     profilePhoto: {
         width: 56,
@@ -31,7 +34,9 @@ const styles = StyleSheet.create({
         borderRadius: 28,
         borderWidth: 2,
         borderColor: "#009688",
+        marginLeft: 16,
     },
 })
 
 export default Header
+
