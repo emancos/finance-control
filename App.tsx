@@ -7,6 +7,7 @@ import DashboardScreen from "./screens/dashboard-screen"
 import TransactionDetailScreen from "./screens/transaction-detail-screen"
 import AddTransactionScreen from "./screens/add-transaction-screen"
 import CategoryListScreen from "./screens/category-list-screen"
+import CategoryTransactionsScreen from "./screens/category-transactions-screen"
 import SettingsScreen from "./screens/settings-screen"
 
 // Create the stack navigator
@@ -28,6 +29,7 @@ export default function App() {
                 <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
                 <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
                 <Stack.Screen name="CategoryList" component={CategoryListScreen} />
+                <Stack.Screen name="CategoryTransactions" component={CategoryTransactionsScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
             </Stack.Navigator>
         </NavigationContainer>
