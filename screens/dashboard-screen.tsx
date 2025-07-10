@@ -1,3 +1,5 @@
+// useNavigation<NativeStackNavigationProp<any>>()
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -22,6 +24,7 @@ import CategoryCarousel from "../components/category-carousel"
 import { useTransactions } from "../hooks/use-transactions"
 import { useSettings } from "../hooks/use-settings"
 import { formatCurrency } from "../utils/format-currency"
+import type { CategoryTotal } from "../types/transaction"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 const DashboardScreen = () => {
@@ -82,9 +85,8 @@ const DashboardScreen = () => {
     navigation.navigate("AddTransaction" as never)
   }
 
-  const handleCategoryPress = (category: any) => {
-    // TODO: Navigate to category details screen
-    console.log("Category pressed:", category.name)
+  const handleCategoryPress = (category: CategoryTotal) => {
+    navigation.navigate("CategoryTransactions", { category })
   }
 
   const handleSeeAllCategories = () => {
@@ -98,7 +100,7 @@ const DashboardScreen = () => {
   const handleTransactionPress = (transaction: any) => {
     navigation.navigate("TransactionDetail", { transaction })
   }
-
+  
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -136,6 +138,7 @@ const DashboardScreen = () => {
           )}
 
           <TransactionsList transactions={transactions} onTransactionPress={handleTransactionPress} />
+
         </ScrollView>
 
         {/* Floating Action Button */}

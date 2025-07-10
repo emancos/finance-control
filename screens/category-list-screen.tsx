@@ -3,14 +3,14 @@ import { useNavigation } from "@react-navigation/native"
 import { ArrowLeft } from "lucide-react-native"
 import { useTransactions } from "../hooks/use-transactions"
 import type { CategoryTotal } from "../types/transaction"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 const CategoryListScreen = () => {
-    const navigation = useNavigation()
+    const navigation = useNavigation<NativeStackNavigationProp<any>>()
     const { categoryTotals, isLoading } = useTransactions()
 
     const handleCategoryPress = (category: CategoryTotal) => {
-        // TODO: Navigate to category details screen
-        console.log("Category pressed:", category.name)
+        navigation.navigate("CategoryTransactions", { category })
     }
 
     const renderCategoryItem = ({ item }: { item: CategoryTotal }) => {
