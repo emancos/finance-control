@@ -1,3 +1,5 @@
+import type React from "react"
+
 export interface Transaction {
     id?: string
     description: string
@@ -28,6 +30,5 @@ export interface CategoryTotal {
     formattedTotal: string
     percentage: number
     color: string
-    icon?: any
+    icon: React.ComponentType<any>
 }
-  
