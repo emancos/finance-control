@@ -6,12 +6,10 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  TouchableOpacity,
   ActivityIndicator,
   Text,
   Alert,
 } from "react-native"
-import { Settings } from "lucide-react-native"
 import { RefreshControl } from "react-native"
 
 import Header from "../components/header"
@@ -111,9 +109,6 @@ const DashboardScreen = () => {
       <View style={styles.dashboard}>
         <View style={styles.headerContainer}>
           <Header name={userData.name} />
-          <TouchableOpacity style={styles.settingsButton} onPress={handleSettings}>
-            <Settings color="#00bfa5" size={24} />
-          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -153,9 +148,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 28,
-  },
-  settingsButton: {
-    padding: 8,
   },
   scrollContent: {
     flexGrow: 1,
