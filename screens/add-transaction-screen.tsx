@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     View,
     Text,
@@ -13,17 +13,25 @@ import {
     Alert,
     ActivityIndicator,
 } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react-native"
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native"
+import { ArrowLeft, Plus, Trash2, Save } from "lucide-react-native"
 import { Dropdown } from "react-native-element-dropdown"
 import { useTransactions } from "../hooks/use-transactions"
 import { getCategoryOptions } from "../utils/category-icons"
-import type { Person } from "../types/transaction"
+import type { Person, Transaction } from "../types/transaction"
+import type { RootStackParamList } from "../types/navigation"
+
+type AddTransactionRouteProp = RouteProp<RootStackParamList, "AddTransaction">
 
 const AddTransactionScreen = () => {
     const navigation = useNavigation()
-    const { addTransaction } = useTransactions()
+    const route = useRoute<AddTransactionRouteProp>()
+    const { addTransaction, updateTransaction } = useTransactions()
     const [isSaving, setIsSaving] = useState(false)
+
+    // Verificar se é modo de edição
+    const editTransaction = route.params?.transaction
+    const isEditMode = !!editTransaction
 
     // Form state
     const [description, setDescription] = useState("")
@@ -52,6 +60,37 @@ const AddTransactionScreen = () => {
         label: `${i + 1}x`,
         value: (i + 1).toString(),
     }))
+
+    // Inicializar campos quando em modo de edição
+    useEffect(() => {
+        if (isEditMode && editTransaction) {
+            setDescription(editTransaction.description || "")
+            setCategory(editTransaction.category || "supermercado")
+            setDate(editTransaction.date || "")
+            setTime(editTransaction.time || "")
+            setNotes(editTransaction.notes || "")
+            setIsCollective(editTransaction.isCollective || false)
+            setPeople(editTransaction.people || [{ id: "1", name: "", amount: "" }])
+
+            // Extrair valor numérico da string (ex: "- R$ 320,00" -> "320,00")
+            const valueMatch = editTransaction.value.match(/[\d,]+/)
+            if (valueMatch) {
+                setTotalAmount(valueMatch[0])
+            }
+
+            // Determinar tipo de pagamento baseado no método
+            if (editTransaction.paymentMethod?.includes("Parcelado")) {
+                setPaymentType("parcelado")
+                // Extrair número de parcelas (ex: "Parcelado 3x" -> "3")
+                const installmentMatch = editTransaction.paymentMethod.match(/(\d+)x/)
+                if (installmentMatch) {
+                    setInstallments(installmentMatch[1])
+                }
+            } else {
+                setPaymentType("vista")
+            }
+        }
+    }, [isEditMode, editTransaction])
 
     const calculateInstallmentValue = () => {
         if (!totalAmount || paymentType === "vista") return ""
@@ -119,31 +158,69 @@ const AddTransactionScreen = () => {
         setIsSaving(true)
 
         try {
-            // Preparar os dados da transação
-            const transactionData = {
-                description,
-                value: `- R$ ${totalAmount}`,
-                date,
-                type: "negative" as const,
-                category,
-                time,
-                paymentMethod: paymentType === "vista" ? "À Vista" : `Parcelado ${installments}x`,
-                notes,
-                installments: paymentType === "parcelado" ? Number.parseInt(installments) : undefined,
-                installmentValue: paymentType === "parcelado" ? calculateInstallmentValue() : undefined,
-                isCollective,
-                people: isCollective ? people : undefined,
-            }
+            if (isEditMode && editTransaction) {
+                // Modo de edição - atualizar transação existente
+                const updatedTransaction: Transaction = {
+                    ...editTransaction, // Manter dados originais (id, timestamp, etc.)
+                    description,
+                    value: editTransaction.type === "positive" ? `+ R$ ${totalAmount}` : `- R$ ${totalAmount}`,
+                    date,
+                    category: editTransaction.type === "negative" ? category : editTransaction.category,
+                    time,
+                    paymentMethod:
+                        editTransaction.type === "negative"
+                            ? paymentType === "vista"
+                                ? "À Vista"
+                                : `Parcelado ${installments}x`
+                            : editTransaction.paymentMethod,
+                    notes,
+                    installments:
+                        editTransaction.type === "negative" && paymentType === "parcelado"
+                            ? Number.parseInt(installments)
+                            : undefined,
+                    installmentValue:
+                        editTransaction.type === "negative" && paymentType === "parcelado"
+                            ? calculateInstallmentValue()
+                            : undefined,
+                    isCollective: editTransaction.type === "negative" ? isCollective : false,
+                    people: editTransaction.type === "negative" && isCollective ? people : undefined,
+                }
 
-            // Salvar a transação
-            const success = await addTransaction(transactionData)
+                const success = await updateTransaction(updatedTransaction)
 
-            if (success) {
-                Alert.alert("Sucesso", "Transação adicionada com sucesso!", [
-                    { text: "OK", onPress: () => navigation.goBack() },
-                ])
+                if (success) {
+                    Alert.alert("Sucesso", "Transação atualizada com sucesso!", [
+                        { text: "OK", onPress: () => navigation.goBack() },
+                    ])
+                } else {
+                    Alert.alert("Erro", "Não foi possível atualizar a transação. Tente novamente.")
+                }
             } else {
-                Alert.alert("Erro", "Não foi possível salvar a transação. Tente novamente.")
+                // Modo de adição - criar nova transação
+                const transactionData = {
+                    description,
+                    value: `- R$ ${totalAmount}`,
+                    date,
+                    type: "negative" as const,
+                    category,
+                    time,
+                    paymentMethod: paymentType === "vista" ? "À Vista" : `Parcelado ${installments}x`,
+                    notes,
+                    installments: paymentType === "parcelado" ? Number.parseInt(installments) : undefined,
+                    installmentValue: paymentType === "parcelado" ? calculateInstallmentValue() : undefined,
+                    isCollective,
+                    people: isCollective ? people : undefined,
+                }
+
+                const success = await addTransaction(transactionData)
+
+                if (success) {
+                    Alert.alert("Sucesso", "Transação adicionada com sucesso!", [
+                        { text: "OK", onPress: () => navigation.goBack() },
+                    ])
+                } else {
+                    Alert.alert("Erro", "Não foi possível salvar a transação. Tente novamente.")
+                }
             }
         } catch (error) {
             console.error("Erro ao salvar transação:", error)
@@ -153,13 +230,16 @@ const AddTransactionScreen = () => {
         }
     }
 
+    // Determinar se deve mostrar campos específicos de despesas
+    const showExpenseFields = !isEditMode || (isEditMode && editTransaction?.type === "negative")
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <ArrowLeft color="#00bfa5" size={24} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Nova Transação</Text>
+                <Text style={styles.headerTitle}>{isEditMode ? "Editar Transação" : "Nova Transação"}</Text>
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -209,62 +289,66 @@ const AddTransactionScreen = () => {
                     </View>
                 </View>
 
-                {/* Categoria */}
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Categoria</Text>
-                    <Dropdown
-                        style={[styles.dropdown, isCategoryFocus && { borderColor: "#00bfa5" }]}
-                        placeholderStyle={styles.placeholderStyle}
-                        selectedTextStyle={styles.selectedTextStyle}
-                        containerStyle={styles.dropdownContainer}
-                        itemContainerStyle={styles.itemContainer}
-                        itemTextStyle={styles.itemText}
-                        activeColor="rgb(50, 50, 50)"
-                        iconStyle={styles.iconStyle}
-                        data={categories}
-                        maxHeight={300}
-                        labelField="label"
-                        valueField="value"
-                        placeholder={!isCategoryFocus ? "Selecione a categoria" : "..."}
-                        value={category}
-                        onFocus={() => setIsCategoryFocus(true)}
-                        onBlur={() => setIsCategoryFocus(false)}
-                        onChange={(item) => {
-                            setCategory(item.value)
-                            setIsCategoryFocus(false)
-                        }}
-                    />
-                </View>
+                {/* Categoria - apenas para despesas */}
+                {showExpenseFields && (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Categoria</Text>
+                        <Dropdown
+                            style={[styles.dropdown, isCategoryFocus && { borderColor: "#00bfa5" }]}
+                            placeholderStyle={styles.placeholderStyle}
+                            selectedTextStyle={styles.selectedTextStyle}
+                            containerStyle={styles.dropdownContainer}
+                            itemContainerStyle={styles.itemContainer}
+                            itemTextStyle={styles.itemText}
+                            activeColor="rgb(50, 50, 50)"
+                            iconStyle={styles.iconStyle}
+                            data={categories}
+                            maxHeight={300}
+                            labelField="label"
+                            valueField="value"
+                            placeholder={!isCategoryFocus ? "Selecione a categoria" : "..."}
+                            value={category}
+                            onFocus={() => setIsCategoryFocus(true)}
+                            onBlur={() => setIsCategoryFocus(false)}
+                            onChange={(item) => {
+                                setCategory(item.value)
+                                setIsCategoryFocus(false)
+                            }}
+                        />
+                    </View>
+                )}
 
-                {/* Tipo de Pagamento */}
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Tipo de Pagamento</Text>
-                    <Dropdown
-                        style={[styles.dropdown, isPaymentTypeFocus && { borderColor: "#00bfa5" }]}
-                        placeholderStyle={styles.placeholderStyle}
-                        selectedTextStyle={styles.selectedTextStyle}
-                        containerStyle={styles.dropdownContainer}
-                        itemContainerStyle={styles.itemContainer}
-                        itemTextStyle={styles.itemText}
-                        activeColor="rgb(50, 50, 50)"
-                        iconStyle={styles.iconStyle}
-                        data={paymentTypeData}
-                        maxHeight={300}
-                        labelField="label"
-                        valueField="value"
-                        placeholder={!isPaymentTypeFocus ? "Selecione o tipo de pagamento" : "..."}
-                        value={paymentType}
-                        onFocus={() => setIsPaymentTypeFocus(true)}
-                        onBlur={() => setIsPaymentTypeFocus(false)}
-                        onChange={(item) => {
-                            setPaymentType(item.value)
-                            setIsPaymentTypeFocus(false)
-                        }}
-                    />
-                </View>
+                {/* Tipo de Pagamento - apenas para despesas */}
+                {showExpenseFields && (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Tipo de Pagamento</Text>
+                        <Dropdown
+                            style={[styles.dropdown, isPaymentTypeFocus && { borderColor: "#00bfa5" }]}
+                            placeholderStyle={styles.placeholderStyle}
+                            selectedTextStyle={styles.selectedTextStyle}
+                            containerStyle={styles.dropdownContainer}
+                            itemContainerStyle={styles.itemContainer}
+                            itemTextStyle={styles.itemText}
+                            activeColor="rgb(50, 50, 50)"
+                            iconStyle={styles.iconStyle}
+                            data={paymentTypeData}
+                            maxHeight={300}
+                            labelField="label"
+                            valueField="value"
+                            placeholder={!isPaymentTypeFocus ? "Selecione o tipo de pagamento" : "..."}
+                            value={paymentType}
+                            onFocus={() => setIsPaymentTypeFocus(true)}
+                            onBlur={() => setIsPaymentTypeFocus(false)}
+                            onChange={(item) => {
+                                setPaymentType(item.value)
+                                setIsPaymentTypeFocus(false)
+                            }}
+                        />
+                    </View>
+                )}
 
-                {/* Parcelas (se parcelado) */}
-                {paymentType === "parcelado" && (
+                {/* Parcelas (se parcelado) - apenas para despesas */}
+                {showExpenseFields && paymentType === "parcelado" && (
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Número de Parcelas</Text>
                         <Dropdown
@@ -293,21 +377,23 @@ const AddTransactionScreen = () => {
                     </View>
                 )}
 
-                {/* Compra Coletiva */}
-                <View style={styles.formGroup}>
-                    <View style={styles.switchContainer}>
-                        <Text style={styles.label}>Compra Coletiva</Text>
-                        <Switch
-                            value={isCollective}
-                            onValueChange={setIsCollective}
-                            trackColor={{ false: "#333", true: "#00bfa5" }}
-                            thumbColor={isCollective ? "#fff" : "#ccc"}
-                        />
+                {/* Compra Coletiva - apenas para despesas */}
+                {showExpenseFields && (
+                    <View style={styles.formGroup}>
+                        <View style={styles.switchContainer}>
+                            <Text style={styles.label}>Compra Coletiva</Text>
+                            <Switch
+                                value={isCollective}
+                                onValueChange={setIsCollective}
+                                trackColor={{ false: "#333", true: "#00bfa5" }}
+                                thumbColor={isCollective ? "#fff" : "#ccc"}
+                            />
+                        </View>
                     </View>
-                </View>
+                )}
 
-                {/* Pessoas (se coletiva) */}
-                {isCollective && (
+                {/* Pessoas (se coletiva) - apenas para despesas */}
+                {showExpenseFields && isCollective && (
                     <View style={styles.formGroup}>
                         <View style={styles.peopleHeader}>
                             <Text style={styles.label}>Divisão por Pessoa</Text>
@@ -373,7 +459,10 @@ const AddTransactionScreen = () => {
                     {isSaving ? (
                         <ActivityIndicator color="#fff" size="small" />
                     ) : (
-                        <Text style={styles.submitButtonText}>Adicionar Transação</Text>
+                        <>
+                            {isEditMode ? <Save color="#fff" size={20} /> : <Plus color="#fff" size={20} />}
+                            <Text style={styles.submitButtonText}>{isEditMode ? "Salvar Alterações" : "Adicionar Transação"}</Text>
+                        </>
                     )}
                 </TouchableOpacity>
             </ScrollView>
@@ -525,7 +614,10 @@ const styles = StyleSheet.create({
         backgroundColor: "#009688",
         borderRadius: 28,
         padding: 16,
+        flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
         marginTop: 20,
         marginBottom: 40,
     },
