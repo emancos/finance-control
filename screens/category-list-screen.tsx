@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, FlatList, ActivityIndicator } from "react-native"
+import { View, Text, StyleSheet, SafeAreaView, FlatList, ActivityIndicator } from "react-native"
+import { TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { ArrowLeft } from "lucide-react-native"
 import { useTransactions } from "../hooks/use-transactions"
 import type { CategoryTotal } from "../types/transaction"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -60,10 +60,7 @@ const CategoryListScreen = () => {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <ArrowLeft color="#00bfa5" size={24} />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Gastos por Categoria</Text>
+                    <Text style={styles.headerTitle}>Categorias</Text>
                 </View>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#00bfa5" />
@@ -76,10 +73,7 @@ const CategoryListScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#00bfa5" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Gastos por Categoria</Text>
+                <Text style={styles.headerTitle}>Categorias</Text>
             </View>
 
             <View style={styles.content}>
@@ -102,20 +96,15 @@ const styles = StyleSheet.create({
         backgroundColor: "#121212",
     },
     header: {
-        flexDirection: "row",
-        alignItems: "center",
         padding: 16,
         borderBottomWidth: 1,
         borderBottomColor: "#333",
     },
-    backButton: {
-        padding: 8,
-    },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: "600",
+        fontSize: 24,
+        fontWeight: "700",
         color: "#00bfa5",
-        marginLeft: 16,
+        textAlign: "center",
     },
     content: {
         flex: 1,
@@ -123,6 +112,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         flexGrow: 1,
+        paddingBottom: 20, // Espaço extra para a bottom tab
     },
     categoryItem: {
         backgroundColor: "rgb(40 40 40)",

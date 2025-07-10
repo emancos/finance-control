@@ -1,5 +1,3 @@
-// useNavigation<NativeStackNavigationProp<any>>()
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -13,7 +11,7 @@ import {
   Text,
   Alert,
 } from "react-native"
-import { Plus, Settings } from "lucide-react-native"
+import { Settings } from "lucide-react-native"
 import { RefreshControl } from "react-native"
 
 import Header from "../components/header"
@@ -81,16 +79,12 @@ const DashboardScreen = () => {
     ])
   }, [transactions, settings.salary])
 
-  const handleAddTransaction = () => {
-    navigation.navigate("AddTransaction" as never)
-  }
-
   const handleCategoryPress = (category: CategoryTotal) => {
     navigation.navigate("CategoryTransactions", { category })
   }
 
   const handleSeeAllCategories = () => {
-    navigation.navigate("CategoryList" as never)
+    navigation.navigate("Categories" as never)
   }
 
   const handleSettings = () => {
@@ -100,7 +94,7 @@ const DashboardScreen = () => {
   const handleTransactionPress = (transaction: any) => {
     navigation.navigate("TransactionDetail", { transaction })
   }
-  
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -138,13 +132,7 @@ const DashboardScreen = () => {
           )}
 
           <TransactionsList transactions={transactions} onTransactionPress={handleTransactionPress} />
-
         </ScrollView>
-
-        {/* Floating Action Button */}
-        <TouchableOpacity style={styles.fab} onPress={handleAddTransaction} activeOpacity={0.8}>
-          <Plus color="#fff" size={24} />
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   )
@@ -171,22 +159,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#009688",
-    borderRadius: 28,
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    paddingBottom: 20, // Espaço extra para a bottom tab
   },
   loadingContainer: {
     flex: 1,
@@ -197,20 +170,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: "#00bfa5",
-  },
-  seedButton: {
-    backgroundColor: "#333",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#555",
-  },
-  seedButtonText: {
-    color: "#00bfa5",
-    fontSize: 14,
-    fontWeight: "500",
   },
 })
 

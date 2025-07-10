@@ -3,15 +3,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { StatusBar } from "react-native"
 
 import LoginScreen from "./screens/login-screen"
-import DashboardScreen from "./screens/dashboard-screen"
+import MainTabNavigator from "./components/main-tab-navigator"
 import TransactionDetailScreen from "./screens/transaction-detail-screen"
 import AddTransactionScreen from "./screens/add-transaction-screen"
-import CategoryListScreen from "./screens/category-list-screen"
 import CategoryTransactionsScreen from "./screens/category-transactions-screen"
-import SettingsScreen from "./screens/settings-screen"
+import type { RootStackParamList } from "./types/navigation"
 
 // Create the stack navigator
-const Stack = createNativeStackNavigator()
+const Stack = createNativeStackNavigator<RootStackParamList>()
 
 export default function App() {
     return (
@@ -25,12 +24,16 @@ export default function App() {
                 }}
             >
                 <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="Dashboard" component={DashboardScreen} />
+                <Stack.Screen name="Main" component={MainTabNavigator} />
                 <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
-                <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
-                <Stack.Screen name="CategoryList" component={CategoryListScreen} />
+                <Stack.Screen
+                    name="AddTransaction"
+                    component={AddTransactionScreen}
+                    options={{
+                        presentation: "modal", // Apresentar como modal quando chamado do stack
+                    }}
+                />
                 <Stack.Screen name="CategoryTransactions" component={CategoryTransactionsScreen} />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     )
