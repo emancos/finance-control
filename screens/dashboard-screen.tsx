@@ -1,128 +1,89 @@
-import { View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from "react-native"
-import { Plus, ShoppingCart, Car, UtensilsCrossed, Gamepad2, Home } from "lucide-react-native"
+"use client"
+
+import { useState, useEffect } from "react"
+import { View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Text } from "react-native"
+import { Plus } from "lucide-react-native"
+import { RefreshControl } from "react-native"
 
 import Header from "../components/header"
 import FinancialCards from "../components/financial-card"
 import TransactionsList from "../components/transactions-list"
 import { useNavigation } from "@react-navigation/native"
-import CategoryCarousel, { type CategoryData } from "../components/category-carousel"
+import CategoryCarousel from "../components/category-carousel"
+import { useTransactions } from "../hooks/use-transactions"
+import { formatCurrency } from "../utils/format-currency"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 const DashboardScreen = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation<NativeStackNavigationProp<any>>()
+  const { transactions, categoryTotals, isLoading, refreshTransactions } = useTransactions()
+  const [financialSummary, setFinancialSummary] = useState([
+    { title: "Salário Disponível", amount: "R$ 0,00", type: "positive" as const },
+    { title: "Saldo Devedor", amount: "R$ 0,00", type: "negative" as const },
+    { title: "Resumo Gastos", amount: "R$ 0,00", type: "negative" as const },
+  ])
 
   const userData = {
     name: "Emanuel",
   }
 
-  const financialData = [
-    { title: "Salário Disponível", amount: "R$ 7.500,00", type: "positive" as const },
-    { title: "Saldo Devedor", amount: "R$ 1.200,00", type: "negative" as const },
-    { title: "Resumo Gastos", amount: "R$ 3.450,00", type: "negative" as const },
-  ]
+  // Calcular resumo financeiro com base nas transações
+  useEffect(() => {
+    if (transactions.length > 0) {
+      let income = 0
+      let expenses = 0
+      let debt = 0
 
-  const categoryData: CategoryData[] = [
-    {
-      id: "1",
-      name: "Supermercado",
-      total: "R$ 1.250,00",
-      icon: ShoppingCart,
-      color: "#ff9800",
-      percentage: 36,
-    },
-    {
-      id: "2",
-      name: "Veículo",
-      total: "R$ 890,00",
-      icon: Car,
-      color: "#2196f3",
-      percentage: 26,
-    },
-    {
-      id: "3",
-      name: "Alimentação",
-      total: "R$ 650,00",
-      icon: UtensilsCrossed,
-      color: "#4caf50",
-      percentage: 19,
-    },
-    {
-      id: "4",
-      name: "Lazer",
-      total: "R$ 420,00",
-      icon: Gamepad2,
-      color: "#e91e63",
-      percentage: 12,
-    },
-    {
-      id: "5",
-      name: "Moradia",
-      total: "R$ 240,00",
-      icon: Home,
-      color: "#9c27b0",
-      percentage: 7,
-    },
-  ]
+      transactions.forEach((transaction) => {
+        const value = Number.parseFloat(transaction.value.replace(/[^\d,-]/g, "").replace(",", "."))
 
-  const transactions = [
-    {
-      description: "Mercado",
-      value: "- R$ 320,00",
-      date: "24/06/2024",
-      type: "negative" as const,
-      category: "Alimentação",
-      time: "15:30",
-      paymentMethod: "Cartão de débito",
-      notes: "Compras semanais no Supermercado Extra. Incluiu frutas, legumes e produtos de limpeza.",
-    },
-    {
-      description: "Salário",
-      value: "+ R$ 7.500,00",
-      date: "23/06/2024",
-      type: "positive" as const,
-      category: "Receita",
-      time: "08:00",
-      paymentMethod: "Transferência bancária",
-      notes: "Salário mensal da empresa XYZ Tecnologia.",
-    },
-    {
-      description: "Conta de luz",
-      value: "- R$ 150,00",
-      date: "22/06/2024",
-      type: "negative" as const,
-      category: "Moradia",
-      time: "10:15",
-      paymentMethod: "Débito automático",
-      notes: "Fatura de energia elétrica referente ao mês de junho.",
-    },
-    {
-      description: "Academia",
-      value: "- R$ 100,00",
-      date: "20/06/2024",
-      type: "negative" as const,
-      category: "Saúde",
-      time: "14:45",
-      paymentMethod: "Cartão de crédito",
-      notes: "Mensalidade da academia Fitness Center.",
-    },
-    {
-      description: "Streaming",
-      value: "- R$ 50,00",
-      date: "20/06/2024",
-      type: "negative" as const,
-      category: "Entretenimento",
-      time: "09:30",
-      paymentMethod: "Cartão de crédito",
-      notes: "Assinatura mensal dos serviços de streaming.",
-    },
-  ]
+        if (transaction.type === "positive") {
+          income += value
+        } else {
+          expenses += Math.abs(value)
+
+          // Se for parcelado, adicionar ao saldo devedor
+          if (
+            transaction.paymentMethod?.includes("Parcelado") &&
+            transaction.installments &&
+            transaction.installments > 1
+          ) {
+            const installmentValue = Number.parseFloat(transaction.installmentValue?.replace(",", ".") || "0")
+            debt += installmentValue * (transaction.installments - 1)
+          }
+        }
+      })
+
+      setFinancialSummary([
+        { title: "Salário Disponível", amount: formatCurrency(income - expenses), type: "positive" as const },
+        { title: "Saldo Devedor", amount: formatCurrency(debt), type: "negative" as const },
+        { title: "Resumo Gastos", amount: formatCurrency(expenses), type: "negative" as const },
+      ])
+    }
+  }, [transactions])
 
   const handleAddTransaction = () => {
     navigation.navigate("AddTransaction" as never)
   }
 
-  const handleCategoryPress = (category: CategoryData) => {
+  const handleCategoryPress = (category: any) => {
     // TODO: Navigate to category details screen
     console.log("Category pressed:", category.name)
+  }
+
+  const handleTransactionPress = (transaction: any) => {
+    navigation.navigate("TransactionDetail", { transaction })
+  }
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#00bfa5" />
+          <Text style={styles.loadingText}>Carregando dados...</Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -130,10 +91,18 @@ const DashboardScreen = () => {
       <View style={styles.dashboard}>
         <Header name={userData.name} />
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          <FinancialCards data={financialData} />
-          <CategoryCarousel categories={categoryData} onCategoryPress={handleCategoryPress} />
-          <TransactionsList transactions={transactions} />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refreshTransactions} tintColor="#00bfa5" />}
+        >
+          <FinancialCards data={financialSummary} />
+
+          {categoryTotals.length > 0 && (
+            <CategoryCarousel categories={categoryTotals} onCategoryPress={handleCategoryPress} />
+          )}
+
+          <TransactionsList transactions={transactions} onTransactionPress={handleTransactionPress} />
         </ScrollView>
 
         {/* Floating Action Button */}
@@ -173,6 +142,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#00bfa5",
   },
 })
 

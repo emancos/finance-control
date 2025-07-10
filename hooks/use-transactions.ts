@@ -40,6 +40,7 @@ export function useTransactions() {
             // Mapear para o formato necessário para o componente
             const formattedTotals = Object.entries(totals).map(([category, total], index) => {
                 const percentage = totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0
+                const categoryConfig = categoryIcons[category]
 
                 return {
                     id: index.toString(),
@@ -47,8 +48,8 @@ export function useTransactions() {
                     total,
                     formattedTotal: formatCurrency(total),
                     percentage,
-                    color: categoryIcons[category]?.color || "#009688",
-                    icon: categoryIcons[category]?.icon,
+                    color: categoryConfig?.color || "#009688",
+                    icon: categoryConfig?.icon || categoryIcons.outros.icon, // Ensure icon is always present
                 }
             })
 

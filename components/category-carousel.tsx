@@ -4,7 +4,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from "
 export interface CategoryData {
     id: string
     name: string
-    total: string
+    total: number 
+    formattedTotal: string
     icon: React.ComponentType<any>
     color: string
     percentage: number
@@ -29,7 +30,7 @@ const CategoryCarousel = ({ categories, onCategoryPress }: CategoryCarouselProps
                 </View>
 
                 <Text style={styles.categoryName}>{item.name}</Text>
-                <Text style={styles.categoryTotal}>{item.total}</Text>
+                <Text style={styles.categoryTotal}>{item.formattedTotal}</Text>
 
                 <View style={styles.progressContainer}>
                     <View style={styles.progressBackground}>

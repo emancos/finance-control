@@ -1,27 +1,22 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { NativeStackNavigationProp } from "@react-navigation/native-stack"
-
-export interface Transaction {
-    description: string
-    value: string
-    date: string
-    type: "positive" | "negative"
-    category?: string
-    time?: string
-    paymentMethod?: string
-    notes?: string
-}
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import type { Transaction } from "../types/transaction"
 
 interface TransactionsListProps {
     transactions: Transaction[]
+    onTransactionPress?: (transaction: Transaction) => void
 }
 
-const TransactionsList = ({ transactions }: TransactionsListProps) => {
+const TransactionsList = ({ transactions, onTransactionPress }: TransactionsListProps) => {
     const navigation = useNavigation<NativeStackNavigationProp<any>>()
 
     const handleTransactionPress = (transaction: Transaction) => {
-        navigation.navigate("TransactionDetail", { transaction })
+        if (onTransactionPress) {
+            onTransactionPress(transaction)
+        } else {
+            navigation.navigate("TransactionDetail", { transaction })
+        }
     }
 
     const renderItem = ({ item }: { item: Transaction }) => (
@@ -30,6 +25,13 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
             <Text style={[styles.value, item.type === "positive" ? styles.positive : styles.negative]}>{item.value}</Text>
             <Text style={styles.date}>{item.date}</Text>
         </TouchableOpacity>
+    )
+
+    const renderEmptyList = () => (
+        <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+            <Text style={styles.emptySubtext}>Adicione uma nova transação usando o botão +</Text>
+        </View>
     )
 
     return (
@@ -45,9 +47,10 @@ const TransactionsList = ({ transactions }: TransactionsListProps) => {
             <FlatList
                 data={transactions}
                 renderItem={renderItem}
-                keyExtractor={(_, index) => index.toString()}
+                keyExtractor={(item) => item.id || Math.random().toString()}
                 showsVerticalScrollIndicator={false}
                 style={styles.list}
+                ListEmptyComponent={renderEmptyList}
             />
         </View>
     )
@@ -60,7 +63,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 16,
         elevation: 4,
-        overflow: 'hidden',
+        overflow: "hidden",
     },
     title: {
         marginBottom: 12,
@@ -111,6 +114,21 @@ const styles = StyleSheet.create({
     },
     negative: {
         color: "#f44336",
+    },
+    emptyContainer: {
+        padding: 24,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    emptyText: {
+        fontSize: 16,
+        color: "#e0e0e0",
+        marginBottom: 8,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: "#80cbc4",
+        textAlign: "center",
     },
 })
 
