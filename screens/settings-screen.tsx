@@ -7,7 +7,7 @@ import {
     StyleSheet,
     SafeAreaView,
     TouchableOpacity,
-    ScrollView,
+    FlatList,
     TextInput,
     Alert,
     ActivityIndicator,
@@ -45,9 +45,7 @@ const SettingsScreen = () => {
         try {
             const success = await updateSalary(numericSalary)
             if (success) {
-                Alert.alert("Sucesso", "Salário atualizado com sucesso!", [
-                    { text: "OK", onPress: () => navigation.goBack() },
-                ])
+                Alert.alert("Sucesso", "Salário atualizado com sucesso!", [{ text: "OK", onPress: () => navigation.goBack() }])
             } else {
                 Alert.alert("Erro", "Não foi possível salvar o salário. Tente novamente.")
             }
@@ -61,6 +59,100 @@ const SettingsScreen = () => {
 
     const formatSalaryDisplay = (value: number) => {
         return `R$ ${value.toFixed(2).replace(".", ",")}`
+    }
+
+    // Preparar dados para FlatList
+    const settingsData = [
+        { type: "header", id: "header" },
+        { type: "salary-section", id: "salary-section" },
+        { type: "info-section", id: "info-section" },
+    ]
+
+    const renderItem = ({ item }: { item: any }) => {
+        switch (item.type) {
+            case "header":
+                return (
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                            <ArrowLeft color="#00bfa5" size={24} />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Configurações</Text>
+                    </View>
+                )
+
+            case "salary-section":
+                return (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <DollarSign color="#00bfa5" size={24} />
+                            <Text style={styles.sectionTitle}>Configuração de Salário</Text>
+                        </View>
+
+                        <View style={styles.card}>
+                            <Text style={styles.cardTitle}>Salário Mensal</Text>
+                            <Text style={styles.cardSubtitle}>
+                                Configure seu salário mensal para cálculos automáticos de saldo disponível
+                            </Text>
+
+                            {settings.salary > 0 && (
+                                <View style={styles.currentSalaryContainer}>
+                                    <Text style={styles.currentSalaryLabel}>Salário atual:</Text>
+                                    <Text style={styles.currentSalaryValue}>{formatSalaryDisplay(settings.salary)}</Text>
+                                </View>
+                            )}
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.inputLabel}>Novo salário</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="0,00"
+                                    placeholderTextColor="#777"
+                                    value={salary}
+                                    onChangeText={setSalary}
+                                    keyboardType="numeric"
+                                />
+                            </View>
+
+                            <TouchableOpacity
+                                style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+                                onPress={handleSaveSalary}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                ) : (
+                                    <>
+                                        <Save color="#fff" size={20} />
+                                        <Text style={styles.saveButtonText}>Salvar Salário</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )
+
+            case "info-section":
+                return (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Como funciona</Text>
+                        <View style={styles.infoCard}>
+                            <Text style={styles.infoTitle}>Cálculos Automáticos</Text>
+                            <Text style={styles.infoText}>
+                                • <Text style={styles.highlight}>Salário Disponível:</Text> Salário mensal menos gastos totais
+                            </Text>
+                            <Text style={styles.infoText}>
+                                • <Text style={styles.highlight}>Saldo Devedor:</Text> Soma das parcelas pendentes de compras parceladas
+                            </Text>
+                            <Text style={styles.infoText}>
+                                • <Text style={styles.highlight}>Resumo Gastos:</Text> Total de todas as despesas do período
+                            </Text>
+                        </View>
+                    </View>
+                )
+
+            default:
+                return null
+        }
     }
 
     if (isLoading) {
@@ -82,80 +174,13 @@ const SettingsScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#00bfa5" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Configurações</Text>
-            </View>
-
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Seção de Salário */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <DollarSign color="#00bfa5" size={24} />
-                        <Text style={styles.sectionTitle}>Configuração de Salário</Text>
-                    </View>
-
-                    <View style={styles.card}>
-                        <Text style={styles.cardTitle}>Salário Mensal</Text>
-                        <Text style={styles.cardSubtitle}>
-                            Configure seu salário mensal para cálculos automáticos de saldo disponível
-                        </Text>
-
-                        {settings.salary > 0 && (
-                            <View style={styles.currentSalaryContainer}>
-                                <Text style={styles.currentSalaryLabel}>Salário atual:</Text>
-                                <Text style={styles.currentSalaryValue}>{formatSalaryDisplay(settings.salary)}</Text>
-                            </View>
-                        )}
-
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>Novo salário</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="0,00"
-                                placeholderTextColor="#777"
-                                value={salary}
-                                onChangeText={setSalary}
-                                keyboardType="numeric"
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-                            onPress={handleSaveSalary}
-                            disabled={isSaving}
-                        >
-                            {isSaving ? (
-                                <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                                <>
-                                    <Save color="#fff" size={20} />
-                                    <Text style={styles.saveButtonText}>Salvar Salário</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Seção de Informações */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Como funciona</Text>
-                    <View style={styles.infoCard}>
-                        <Text style={styles.infoTitle}>Cálculos Automáticos</Text>
-                        <Text style={styles.infoText}>
-                            • <Text style={styles.highlight}>Salário Disponível:</Text> Salário mensal menos gastos totais
-                        </Text>
-                        <Text style={styles.infoText}>
-                            • <Text style={styles.highlight}>Saldo Devedor:</Text> Soma das parcelas pendentes de compras parceladas
-                        </Text>
-                        <Text style={styles.infoText}>
-                            • <Text style={styles.highlight}>Resumo Gastos:</Text> Total de todas as despesas do período
-                        </Text>
-                    </View>
-                </View>
-            </ScrollView>
+            <FlatList
+                data={settingsData}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            />
         </SafeAreaView>
     )
 }
@@ -182,8 +207,9 @@ const styles = StyleSheet.create({
         marginLeft: 16,
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         padding: 16,
+        paddingTop: 0,
     },
     section: {
         marginBottom: 24,

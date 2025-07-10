@@ -1,4 +1,6 @@
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert } from "react-native"
+"use client"
+
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, FlatList, Alert } from "react-native"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { ArrowLeft, Edit3, Trash2 } from "lucide-react-native"
 import { useTransactions } from "../hooks/use-transactions"
@@ -52,92 +54,132 @@ const TransactionDetailScreen = () => {
         )
     }
 
+    // Preparar dados para FlatList
+    const detailData = [
+        { type: "header", id: "header" },
+        { type: "transaction-header", id: "transaction-header" },
+        { type: "details-card", id: "details-card" },
+        { type: "actions-card", id: "actions-card" },
+    ]
+
+    const renderItem = ({ item }: { item: any }) => {
+        switch (item.type) {
+            case "header":
+                return (
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                            <ArrowLeft color="#00bfa5" size={24} />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Detalhes da Transação</Text>
+                        <View style={styles.headerActions}>
+                            <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
+                                <Edit3 color="#00bfa5" size={20} />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleDelete} style={[styles.actionButton, styles.deleteButton]}>
+                                <Trash2 color="#f44336" size={20} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )
+
+            case "transaction-header":
+                return (
+                    <View style={styles.transactionHeader}>
+                        <Text style={styles.description}>{transaction.description}</Text>
+                        <Text style={[styles.value, transaction.type === "positive" ? styles.positive : styles.negative]}>
+                            {transaction.value}
+                        </Text>
+                        {transaction.type === "positive" && <Text style={styles.typeLabel}>Receita</Text>}
+                        {transaction.type === "negative" && <Text style={styles.typeLabel}>Despesa</Text>}
+                    </View>
+                )
+
+            case "details-card":
+                return (
+                    <View style={styles.card}>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Data</Text>
+                            <Text style={styles.detailValue}>{transaction.date}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Hora</Text>
+                            <Text style={styles.detailValue}>{time}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Categoria</Text>
+                            <Text style={[styles.detailValue, styles.categoryValue]}>{category}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Método de Pagamento</Text>
+                            <Text style={styles.detailValue}>{paymentMethod}</Text>
+                        </View>
+
+                        {/* Informações de Parcelamento */}
+                        {transaction.installments && transaction.installments > 1 && (
+                            <>
+                                <View style={styles.detailRow}>
+                                    <Text style={styles.detailLabel}>Parcelas</Text>
+                                    <Text style={styles.detailValue}>{transaction.installments}x</Text>
+                                </View>
+                                <View style={styles.detailRow}>
+                                    <Text style={styles.detailLabel}>Valor por Parcela</Text>
+                                    <Text style={styles.detailValue}>R$ {transaction.installmentValue}</Text>
+                                </View>
+                            </>
+                        )}
+
+                        {/* Informações de Compra Coletiva */}
+                        {transaction.isCollective && transaction.people && transaction.people.length > 0 && (
+                            <View style={styles.collectiveSection}>
+                                <Text style={styles.sectionTitle}>Compra Coletiva</Text>
+                                {transaction.people.map((person, index) => (
+                                    <View key={person.id} style={styles.personRow}>
+                                        <Text style={styles.personName}>{person.name}</Text>
+                                        <Text style={styles.personAmount}>R$ {person.amount}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        <View style={styles.notesContainer}>
+                            <Text style={styles.detailLabel}>Observações</Text>
+                            <Text style={styles.notes}>{notes}</Text>
+                        </View>
+                    </View>
+                )
+
+            case "actions-card":
+                return (
+                    <View style={styles.actionsCard}>
+                        <Text style={styles.actionsTitle}>Ações</Text>
+                        <TouchableOpacity style={styles.editActionButton} onPress={handleEdit}>
+                            <Edit3 color="#00bfa5" size={20} />
+                            <Text style={styles.editActionText}>Editar Transação</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.deleteActionButton} onPress={handleDelete}>
+                            <Trash2 color="#f44336" size={20} />
+                            <Text style={styles.deleteActionText}>Excluir Transação</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+
+            default:
+                return null
+        }
+    }
+
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#00bfa5" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Detalhes da Transação</Text>
-            </View>
-
-            <ScrollView style={styles.content}>
-                <View style={styles.transactionHeader}>
-                    <Text style={styles.description}>{transaction.description}</Text>
-                    <Text style={[styles.value, transaction.type === "positive" ? styles.positive : styles.negative]}>
-                        {transaction.value}
-                    </Text>
-                    {transaction.type === "positive" && <Text style={styles.typeLabel}>Receita</Text>}
-                    {transaction.type === "negative" && <Text style={styles.typeLabel}>Despesa</Text>}
-                </View>
-
-                <View style={styles.card}>
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Data</Text>
-                        <Text style={styles.detailValue}>{transaction.date}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Hora</Text>
-                        <Text style={styles.detailValue}>{time}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Categoria</Text>
-                        <Text style={[styles.detailValue, styles.categoryValue]}>{category}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Método de Pagamento</Text>
-                        <Text style={styles.detailValue}>{paymentMethod}</Text>
-                    </View>
-
-                    {/* Informações de Parcelamento */}
-                    {transaction.installments && transaction.installments > 1 && (
-                        <>
-                            <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>Parcelas</Text>
-                                <Text style={styles.detailValue}>{transaction.installments}x</Text>
-                            </View>
-                            <View style={styles.detailRow}>
-                                <Text style={styles.detailLabel}>Valor por Parcela</Text>
-                                <Text style={styles.detailValue}>R$ {transaction.installmentValue}</Text>
-                            </View>
-                        </>
-                    )}
-
-                    {/* Informações de Compra Coletiva */}
-                    {transaction.isCollective && transaction.people && transaction.people.length > 0 && (
-                        <View style={styles.collectiveSection}>
-                            <Text style={styles.sectionTitle}>Compra Coletiva</Text>
-                            {transaction.people.map((person, index) => (
-                                <View key={person.id} style={styles.personRow}>
-                                    <Text style={styles.personName}>{person.name}</Text>
-                                    <Text style={styles.personAmount}>R$ {person.amount}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-
-                    <View style={styles.notesContainer}>
-                        <Text style={styles.detailLabel}>Observações</Text>
-                        <Text style={styles.notes}>{notes}</Text>
-                    </View>
-                </View>
-
-                {/* Card de Ações */}
-                <View style={styles.actionsCard}>
-                    <Text style={styles.actionsTitle}>Ações</Text>
-                    <TouchableOpacity style={styles.editActionButton} onPress={handleEdit}>
-                        <Edit3 color="#00bfa5" size={20} />
-                        <Text style={styles.editActionText}>Editar Transação</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.deleteActionButton} onPress={handleDelete}>
-                        <Trash2 color="#f44336" size={20} />
-                        <Text style={styles.deleteActionText}>Excluir Transação</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+            <FlatList
+                data={detailData}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            />
         </SafeAreaView>
     )
 }
@@ -178,8 +220,9 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(244, 67, 54, 0.1)",
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         padding: 16,
+        paddingTop: 0,
     },
     transactionHeader: {
         marginBottom: 24,

@@ -63,52 +63,65 @@ const CategoryTransactionsScreen = () => {
         const IconComponent = category.icon
 
         return (
-            <View style={styles.headerContent}>
-                {/* Card da categoria */}
-                <View style={styles.categoryCard}>
-                    <View style={styles.categoryHeader}>
-                        <View style={[styles.categoryIcon, { backgroundColor: category.color + "20" }]}>
-                            <IconComponent color={category.color} size={32} />
-                        </View>
-                        <View style={styles.categoryInfo}>
-                            <Text style={styles.categoryName}>{category.name}</Text>
-                            <Text style={styles.categoryTotal}>{category.formattedTotal}</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.progressContainer}>
-                        <View style={styles.progressBackground}>
-                            <View
-                                style={[
-                                    styles.progressBar,
-                                    {
-                                        width: `${Math.min(category.percentage, 100)}%`,
-                                        backgroundColor: category.color,
-                                    },
-                                ]}
-                            />
-                        </View>
-                        <Text style={styles.percentageText}>{category.percentage}%</Text>
-                    </View>
+            <>
+                {/* Header com botão voltar */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <ArrowLeft color="#00bfa5" size={24} />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle} numberOfLines={1}>
+                        {category.name}
+                    </Text>
                 </View>
 
-                {/* Estatísticas */}
-                <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                        <Calendar color="#80cbc4" size={20} />
-                        <Text style={styles.statLabel}>Transações</Text>
-                        <Text style={styles.statValue}>{totalTransactions}</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <TrendingDown color="#80cbc4" size={20} />
-                        <Text style={styles.statLabel}>Média por transação</Text>
-                        <Text style={styles.statValue}>{formatCurrency(averageTransaction)}</Text>
-                    </View>
-                </View>
+                {/* Conteúdo do header */}
+                <View style={styles.headerContent}>
+                    {/* Card da categoria */}
+                    <View style={styles.categoryCard}>
+                        <View style={styles.categoryHeader}>
+                            <View style={[styles.categoryIcon, { backgroundColor: category.color + "20" }]}>
+                                <IconComponent color={category.color} size={32} />
+                            </View>
+                            <View style={styles.categoryInfo}>
+                                <Text style={styles.categoryName}>{category.name}</Text>
+                                <Text style={styles.categoryTotal}>{category.formattedTotal}</Text>
+                            </View>
+                        </View>
 
-                {/* Título da lista */}
-                <Text style={styles.listTitle}>Transações da Categoria</Text>
-            </View>
+                        <View style={styles.progressContainer}>
+                            <View style={styles.progressBackground}>
+                                <View
+                                    style={[
+                                        styles.progressBar,
+                                        {
+                                            width: `${Math.min(category.percentage, 100)}%`,
+                                            backgroundColor: category.color,
+                                        },
+                                    ]}
+                                />
+                            </View>
+                            <Text style={styles.percentageText}>{category.percentage}%</Text>
+                        </View>
+                    </View>
+
+                    {/* Estatísticas */}
+                    <View style={styles.statsContainer}>
+                        <View style={styles.statItem}>
+                            <Calendar color="#80cbc4" size={20} />
+                            <Text style={styles.statLabel}>Transações</Text>
+                            <Text style={styles.statValue}>{totalTransactions}</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                            <TrendingDown color="#80cbc4" size={20} />
+                            <Text style={styles.statLabel}>Média por transação</Text>
+                            <Text style={styles.statValue}>{formatCurrency(averageTransaction)}</Text>
+                        </View>
+                    </View>
+
+                    {/* Título da lista */}
+                    <Text style={styles.listTitle}>Transações da Categoria</Text>
+                </View>
+            </>
         )
     }
 
@@ -131,15 +144,6 @@ const CategoryTransactionsScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#00bfa5" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                    {category.name}
-                </Text>
-            </View>
-
             <FlatList
                 data={categoryTransactions}
                 renderItem={renderTransactionItem}

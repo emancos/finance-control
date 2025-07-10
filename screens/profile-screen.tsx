@@ -6,7 +6,7 @@ import {
     Text,
     StyleSheet,
     SafeAreaView,
-    ScrollView,
+    FlatList,
     TouchableOpacity,
     TextInput,
     Alert,
@@ -110,7 +110,7 @@ const ProfileScreen = () => {
         }
 
         if (!passwordForm.newPassword) {
-            Alert.alert("Erro", "Nova senha é obrigat��ria")
+            Alert.alert("Erro", "Nova senha é obrigatória")
             return
         }
 
@@ -167,211 +167,110 @@ const ProfileScreen = () => {
         )
     }
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#00bfa5" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Meu Perfil</Text>
-                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                    <LogOut color="#f44336" size={24} />
-                </TouchableOpacity>
-            </View>
+    // Preparar dados para FlatList
+    const profileData = [
+        { type: "header", id: "header" },
+        { type: "profile-image", id: "profile-image" },
+        { type: "profile-info", id: "profile-info" },
+        { type: "security", id: "security" },
+        { type: "account-info", id: "account-info" },
+    ]
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Profile Image Section */}
-                <View style={styles.profileImageSection}>
-                    <View style={styles.profileImageContainer}>
-                        {user.profileImage ? (
-                            <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-                        ) : (
-                            <View style={styles.profileImagePlaceholder}>
-                                <User color="#80cbc4" size={40} />
-                            </View>
-                        )}
-                        <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
-                            <Camera color="#fff" size={16} />
+    const renderItem = ({ item }: { item: any }) => {
+        switch (item.type) {
+            case "header":
+                return (
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                            <ArrowLeft color="#00bfa5" size={24} />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Meu Perfil</Text>
+                        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                            <LogOut color="#f44336" size={24} />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.profileName}>{user.name}</Text>
-                    <Text style={styles.profileEmail}>{user.email}</Text>
-                </View>
+                )
 
-                {/* Profile Information Section */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-                        <TouchableOpacity onPress={() => setIsEditingProfile(!isEditingProfile)} style={styles.editButton}>
-                            <Edit3 color="#00bfa5" size={20} />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.card}>
-                        {/* Nome */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Nome Completo</Text>
-                            {isEditingProfile ? (
-                                <View style={styles.inputContainer}>
-                                    <User color="#80cbc4" size={20} style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        value={profileForm.name}
-                                        onChangeText={(value) => setProfileForm((prev) => ({ ...prev, name: value }))}
-                                        placeholder="Digite seu nome"
-                                        placeholderTextColor="#777"
-                                    />
-                                </View>
+            case "profile-image":
+                return (
+                    <View style={styles.profileImageSection}>
+                        <View style={styles.profileImageContainer}>
+                            {user.profileImage ? (
+                                <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
                             ) : (
-                                <Text style={styles.infoText}>{user.name}</Text>
-                            )}
-                        </View>
-
-                        {/* Email */}
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Email</Text>
-                            {isEditingProfile ? (
-                                <View style={styles.inputContainer}>
-                                    <Mail color="#80cbc4" size={20} style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        value={profileForm.email}
-                                        onChangeText={(value) => setProfileForm((prev) => ({ ...prev, email: value }))}
-                                        placeholder="Digite seu email"
-                                        placeholderTextColor="#777"
-                                        keyboardType="email-address"
-                                        autoCapitalize="none"
-                                    />
+                                <View style={styles.profileImagePlaceholder}>
+                                    <User color="#80cbc4" size={40} />
                                 </View>
-                            ) : (
-                                <Text style={styles.infoText}>{user.email}</Text>
                             )}
-                        </View>
-
-                        {isEditingProfile && (
-                            <View style={styles.buttonRow}>
-                                <TouchableOpacity
-                                    style={styles.cancelButton}
-                                    onPress={() => {
-                                        setIsEditingProfile(false)
-                                        setProfileForm({
-                                            name: user.name,
-                                            email: user.email,
-                                        })
-                                    }}
-                                >
-                                    <Text style={styles.cancelButtonText}>Cancelar</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-                                    onPress={handleUpdateProfile}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <ActivityIndicator color="#fff" size="small" />
-                                    ) : (
-                                        <>
-                                            <Save color="#fff" size={16} />
-                                            <Text style={styles.saveButtonText}>Salvar</Text>
-                                        </>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </View>
-                </View>
-
-                {/* Password Section */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Segurança</Text>
-                        <TouchableOpacity onPress={() => setIsChangingPassword(!isChangingPassword)} style={styles.editButton}>
-                            <Lock color="#00bfa5" size={20} />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.card}>
-                        {!isChangingPassword ? (
-                            <TouchableOpacity style={styles.passwordChangeButton} onPress={() => setIsChangingPassword(true)}>
-                                <Lock color="#00bfa5" size={20} />
-                                <Text style={styles.passwordChangeText}>Alterar Senha</Text>
+                            <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
+                                <Camera color="#fff" size={16} />
                             </TouchableOpacity>
-                        ) : (
-                            <>
-                                {/* Senha Atual */}
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.label}>Senha Atual</Text>
+                        </View>
+                        <Text style={styles.profileName}>{user.name}</Text>
+                        <Text style={styles.profileEmail}>{user.email}</Text>
+                    </View>
+                )
+
+            case "profile-info":
+                return (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+                            <TouchableOpacity onPress={() => setIsEditingProfile(!isEditingProfile)} style={styles.editButton}>
+                                <Edit3 color="#00bfa5" size={20} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.card}>
+                            {/* Nome */}
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Nome Completo</Text>
+                                {isEditingProfile ? (
                                     <View style={styles.inputContainer}>
-                                        <Lock color="#80cbc4" size={20} style={styles.inputIcon} />
+                                        <User color="#80cbc4" size={20} style={styles.inputIcon} />
                                         <TextInput
                                             style={styles.input}
-                                            value={passwordForm.currentPassword}
-                                            onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, currentPassword: value }))}
-                                            placeholder="Digite sua senha atual"
+                                            value={profileForm.name}
+                                            onChangeText={(value) => setProfileForm((prev) => ({ ...prev, name: value }))}
+                                            placeholder="Digite seu nome"
                                             placeholderTextColor="#777"
-                                            secureTextEntry={!showCurrentPassword}
                                         />
-                                        <TouchableOpacity
-                                            onPress={() => setShowCurrentPassword(!showCurrentPassword)}
-                                            style={styles.eyeButton}
-                                        >
-                                            {showCurrentPassword ? <EyeOff color="#80cbc4" size={20} /> : <Eye color="#80cbc4" size={20} />}
-                                        </TouchableOpacity>
                                     </View>
-                                </View>
+                                ) : (
+                                    <Text style={styles.infoText}>{user.name}</Text>
+                                )}
+                            </View>
 
-                                {/* Nova Senha */}
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.label}>Nova Senha</Text>
+                            {/* Email */}
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Email</Text>
+                                {isEditingProfile ? (
                                     <View style={styles.inputContainer}>
-                                        <Lock color="#80cbc4" size={20} style={styles.inputIcon} />
+                                        <Mail color="#80cbc4" size={20} style={styles.inputIcon} />
                                         <TextInput
                                             style={styles.input}
-                                            value={passwordForm.newPassword}
-                                            onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, newPassword: value }))}
-                                            placeholder="Digite sua nova senha"
+                                            value={profileForm.email}
+                                            onChangeText={(value) => setProfileForm((prev) => ({ ...prev, email: value }))}
+                                            placeholder="Digite seu email"
                                             placeholderTextColor="#777"
-                                            secureTextEntry={!showNewPassword}
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
                                         />
-                                        <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)} style={styles.eyeButton}>
-                                            {showNewPassword ? <EyeOff color="#80cbc4" size={20} /> : <Eye color="#80cbc4" size={20} />}
-                                        </TouchableOpacity>
                                     </View>
-                                    <Text style={styles.passwordHint}>Mínimo de 6 caracteres</Text>
-                                </View>
+                                ) : (
+                                    <Text style={styles.infoText}>{user.email}</Text>
+                                )}
+                            </View>
 
-                                {/* Confirmar Nova Senha */}
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.label}>Confirmar Nova Senha</Text>
-                                    <View style={styles.inputContainer}>
-                                        <Lock color="#80cbc4" size={20} style={styles.inputIcon} />
-                                        <TextInput
-                                            style={styles.input}
-                                            value={passwordForm.confirmPassword}
-                                            onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, confirmPassword: value }))}
-                                            placeholder="Confirme sua nova senha"
-                                            placeholderTextColor="#777"
-                                            secureTextEntry={!showConfirmPassword}
-                                        />
-                                        <TouchableOpacity
-                                            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            style={styles.eyeButton}
-                                        >
-                                            {showConfirmPassword ? <EyeOff color="#80cbc4" size={20} /> : <Eye color="#80cbc4" size={20} />}
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-
+                            {isEditingProfile && (
                                 <View style={styles.buttonRow}>
                                     <TouchableOpacity
                                         style={styles.cancelButton}
                                         onPress={() => {
-                                            setIsChangingPassword(false)
-                                            setPasswordForm({
-                                                currentPassword: "",
-                                                newPassword: "",
-                                                confirmPassword: "",
+                                            setIsEditingProfile(false)
+                                            setProfileForm({
+                                                name: user.name,
+                                                email: user.email,
                                             })
                                         }}
                                     >
@@ -380,7 +279,7 @@ const ProfileScreen = () => {
 
                                     <TouchableOpacity
                                         style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-                                        onPress={handleChangePassword}
+                                        onPress={handleUpdateProfile}
                                         disabled={isLoading}
                                     >
                                         {isLoading ? (
@@ -388,31 +287,165 @@ const ProfileScreen = () => {
                                         ) : (
                                             <>
                                                 <Save color="#fff" size={16} />
-                                                <Text style={styles.saveButtonText}>Alterar</Text>
+                                                <Text style={styles.saveButtonText}>Salvar</Text>
                                             </>
                                         )}
                                     </TouchableOpacity>
                                 </View>
-                            </>
-                        )}
+                            )}
+                        </View>
                     </View>
-                </View>
+                )
 
-                {/* Account Info */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Informações da Conta</Text>
-                    <View style={styles.card}>
-                        <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>Membro desde:</Text>
-                            <Text style={styles.infoValue}>{new Date(user.createdAt).toLocaleDateString("pt-BR")}</Text>
+            case "security":
+                return (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Segurança</Text>
+                            <TouchableOpacity onPress={() => setIsChangingPassword(!isChangingPassword)} style={styles.editButton}>
+                                <Lock color="#00bfa5" size={20} />
+                            </TouchableOpacity>
                         </View>
-                        <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>Última atualização:</Text>
-                            <Text style={styles.infoValue}>{new Date(user.updatedAt).toLocaleDateString("pt-BR")}</Text>
+
+                        <View style={styles.card}>
+                            {!isChangingPassword ? (
+                                <TouchableOpacity style={styles.passwordChangeButton} onPress={() => setIsChangingPassword(true)}>
+                                    <Lock color="#00bfa5" size={20} />
+                                    <Text style={styles.passwordChangeText}>Alterar Senha</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <>
+                                    {/* Senha Atual */}
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Senha Atual</Text>
+                                        <View style={styles.inputContainer}>
+                                            <Lock color="#80cbc4" size={20} style={styles.inputIcon} />
+                                            <TextInput
+                                                style={styles.input}
+                                                value={passwordForm.currentPassword}
+                                                onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, currentPassword: value }))}
+                                                placeholder="Digite sua senha atual"
+                                                placeholderTextColor="#777"
+                                                secureTextEntry={!showCurrentPassword}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                style={styles.eyeButton}
+                                            >
+                                                {showCurrentPassword ? <EyeOff color="#80cbc4" size={20} /> : <Eye color="#80cbc4" size={20} />}
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+
+                                    {/* Nova Senha */}
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Nova Senha</Text>
+                                        <View style={styles.inputContainer}>
+                                            <Lock color="#80cbc4" size={20} style={styles.inputIcon} />
+                                            <TextInput
+                                                style={styles.input}
+                                                value={passwordForm.newPassword}
+                                                onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, newPassword: value }))}
+                                                placeholder="Digite sua nova senha"
+                                                placeholderTextColor="#777"
+                                                secureTextEntry={!showNewPassword}
+                                            />
+                                            <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)} style={styles.eyeButton}>
+                                                {showNewPassword ? <EyeOff color="#80cbc4" size={20} /> : <Eye color="#80cbc4" size={20} />}
+                                            </TouchableOpacity>
+                                        </View>
+                                        <Text style={styles.passwordHint}>Mínimo de 6 caracteres</Text>
+                                    </View>
+
+                                    {/* Confirmar Nova Senha */}
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Confirmar Nova Senha</Text>
+                                        <View style={styles.inputContainer}>
+                                            <Lock color="#80cbc4" size={20} style={styles.inputIcon} />
+                                            <TextInput
+                                                style={styles.input}
+                                                value={passwordForm.confirmPassword}
+                                                onChangeText={(value) => setPasswordForm((prev) => ({ ...prev, confirmPassword: value }))}
+                                                placeholder="Confirme sua nova senha"
+                                                placeholderTextColor="#777"
+                                                secureTextEntry={!showConfirmPassword}
+                                            />
+                                            <TouchableOpacity
+                                                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                style={styles.eyeButton}
+                                            >
+                                                {showConfirmPassword ? <EyeOff color="#80cbc4" size={20} /> : <Eye color="#80cbc4" size={20} />}
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.buttonRow}>
+                                        <TouchableOpacity
+                                            style={styles.cancelButton}
+                                            onPress={() => {
+                                                setIsChangingPassword(false)
+                                                setPasswordForm({
+                                                    currentPassword: "",
+                                                    newPassword: "",
+                                                    confirmPassword: "",
+                                                })
+                                            }}
+                                        >
+                                            <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+                                            onPress={handleChangePassword}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <ActivityIndicator color="#fff" size="small" />
+                                            ) : (
+                                                <>
+                                                    <Save color="#fff" size={16} />
+                                                    <Text style={styles.saveButtonText}>Alterar</Text>
+                                                </>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
                         </View>
                     </View>
-                </View>
-            </ScrollView>
+                )
+
+            case "account-info":
+                return (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Informações da Conta</Text>
+                        <View style={styles.card}>
+                            <View style={styles.infoRow}>
+                                <Text style={styles.infoLabel}>Membro desde:</Text>
+                                <Text style={styles.infoValue}>{new Date(user.createdAt).toLocaleDateString("pt-BR")}</Text>
+                            </View>
+                            <View style={styles.infoRow}>
+                                <Text style={styles.infoLabel}>Última atualização:</Text>
+                                <Text style={styles.infoValue}>{new Date(user.updatedAt).toLocaleDateString("pt-BR")}</Text>
+                            </View>
+                        </View>
+                    </View>
+                )
+
+            default:
+                return null
+        }
+    }
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={profileData}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            />
         </SafeAreaView>
     )
 }
@@ -445,8 +478,9 @@ const styles = StyleSheet.create({
         padding: 8,
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         padding: 16,
+        paddingTop: 0,
     },
     profileImageSection: {
         alignItems: "center",

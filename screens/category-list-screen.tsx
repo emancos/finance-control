@@ -56,12 +56,16 @@ const CategoryListScreen = () => {
         </View>
     )
 
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <Text style={styles.headerTitle}>Categorias</Text>
+        </View>
+    )
+
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Categorias</Text>
-                </View>
+                {renderHeader()}
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#00bfa5" />
                     <Text style={styles.loadingText}>Carregando categorias...</Text>
@@ -72,20 +76,15 @@ const CategoryListScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Categorias</Text>
-            </View>
-
-            <View style={styles.content}>
-                <FlatList
-                    data={categoryTotals}
-                    renderItem={renderCategoryItem}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.listContent}
-                    ListEmptyComponent={renderEmptyList}
-                />
-            </View>
+            <FlatList
+                data={categoryTotals}
+                renderItem={renderCategoryItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContent}
+                ListHeaderComponent={renderHeader}
+                ListEmptyComponent={renderEmptyList}
+            />
         </SafeAreaView>
     )
 }
@@ -106,13 +105,10 @@ const styles = StyleSheet.create({
         color: "#00bfa5",
         textAlign: "center",
     },
-    content: {
-        flex: 1,
-        padding: 16,
-    },
     listContent: {
         flexGrow: 1,
-        paddingBottom: 20, // Espaço extra para a bottom tab
+        padding: 16,
+        paddingTop: 0,
     },
     categoryItem: {
         backgroundColor: "rgb(40 40 40)",

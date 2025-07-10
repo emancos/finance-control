@@ -7,7 +7,7 @@ import {
     StyleSheet,
     SafeAreaView,
     TouchableOpacity,
-    ScrollView,
+    FlatList,
     TextInput,
     Switch,
     Alert,
@@ -233,64 +233,87 @@ const AddTransactionScreen = () => {
     // Determinar se deve mostrar campos específicos de despesas
     const showExpenseFields = !isEditMode || (isEditMode && editTransaction?.type === "negative")
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <ArrowLeft color="#00bfa5" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>{isEditMode ? "Editar Transação" : "Nova Transação"}</Text>
-            </View>
+    // Preparar dados para FlatList
+    const formData = [
+        { type: "header", id: "header" },
+        { type: "description", id: "description" },
+        { type: "amount", id: "amount" },
+        { type: "datetime", id: "datetime" },
+        ...(showExpenseFields ? [{ type: "category", id: "category" }] : []),
+        ...(showExpenseFields ? [{ type: "payment-type", id: "payment-type" }] : []),
+        ...(showExpenseFields && paymentType === "parcelado" ? [{ type: "installments", id: "installments" }] : []),
+        ...(showExpenseFields ? [{ type: "collective-toggle", id: "collective-toggle" }] : []),
+        ...(showExpenseFields && isCollective ? [{ type: "people-section", id: "people-section" }] : []),
+        { type: "notes", id: "notes" },
+        { type: "submit", id: "submit" },
+    ]
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Descrição */}
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Descrição</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Ex: Compras do mês"
-                        placeholderTextColor="#777"
-                        value={description}
-                        onChangeText={setDescription}
-                    />
-                </View>
+    const renderItem = ({ item }: { item: any }) => {
+        switch (item.type) {
+            case "header":
+                return (
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                            <ArrowLeft color="#00bfa5" size={24} />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>{isEditMode ? "Editar Transação" : "Nova Transação"}</Text>
+                    </View>
+                )
 
-                {/* Valor Total */}
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Valor Total</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="0,00"
-                        placeholderTextColor="#777"
-                        value={totalAmount}
-                        onChangeText={setTotalAmount}
-                        keyboardType="numeric"
-                    />
-                </View>
-
-                {/* Data e Hora */}
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Data e Hora</Text>
-                    <View style={styles.dateTimeContainer}>
+            case "description":
+                return (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Descrição</Text>
                         <TextInput
-                            style={[styles.input, styles.dateInput]}
-                            placeholder="DD/MM/AAAA"
+                            style={styles.input}
+                            placeholder="Ex: Compras do mês"
                             placeholderTextColor="#777"
-                            value={date}
-                            onChangeText={setDate}
-                        />
-                        <TextInput
-                            style={[styles.input, styles.timeInput]}
-                            placeholder="HH:MM"
-                            placeholderTextColor="#777"
-                            value={time}
-                            onChangeText={setTime}
+                            value={description}
+                            onChangeText={setDescription}
                         />
                     </View>
-                </View>
+                )
 
-                {/* Categoria - apenas para despesas */}
-                {showExpenseFields && (
+            case "amount":
+                return (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Valor Total</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="0,00"
+                            placeholderTextColor="#777"
+                            value={totalAmount}
+                            onChangeText={setTotalAmount}
+                            keyboardType="numeric"
+                        />
+                    </View>
+                )
+
+            case "datetime":
+                return (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Data e Hora</Text>
+                        <View style={styles.dateTimeContainer}>
+                            <TextInput
+                                style={[styles.input, styles.dateInput]}
+                                placeholder="DD/MM/AAAA"
+                                placeholderTextColor="#777"
+                                value={date}
+                                onChangeText={setDate}
+                            />
+                            <TextInput
+                                style={[styles.input, styles.timeInput]}
+                                placeholder="HH:MM"
+                                placeholderTextColor="#777"
+                                value={time}
+                                onChangeText={setTime}
+                            />
+                        </View>
+                    </View>
+                )
+
+            case "category":
+                return (
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Categoria</Text>
                         <Dropdown
@@ -316,10 +339,10 @@ const AddTransactionScreen = () => {
                             }}
                         />
                     </View>
-                )}
+                )
 
-                {/* Tipo de Pagamento - apenas para despesas */}
-                {showExpenseFields && (
+            case "payment-type":
+                return (
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Tipo de Pagamento</Text>
                         <Dropdown
@@ -345,10 +368,10 @@ const AddTransactionScreen = () => {
                             }}
                         />
                     </View>
-                )}
+                )
 
-                {/* Parcelas (se parcelado) - apenas para despesas */}
-                {showExpenseFields && paymentType === "parcelado" && (
+            case "installments":
+                return (
                     <View style={styles.formGroup}>
                         <Text style={styles.label}>Número de Parcelas</Text>
                         <Dropdown
@@ -375,10 +398,10 @@ const AddTransactionScreen = () => {
                         />
                         <Text style={styles.installmentInfo}>Valor por parcela: R$ {calculateInstallmentValue()}</Text>
                     </View>
-                )}
+                )
 
-                {/* Compra Coletiva - apenas para despesas */}
-                {showExpenseFields && (
+            case "collective-toggle":
+                return (
                     <View style={styles.formGroup}>
                         <View style={styles.switchContainer}>
                             <Text style={styles.label}>Compra Coletiva</Text>
@@ -390,10 +413,10 @@ const AddTransactionScreen = () => {
                             />
                         </View>
                     </View>
-                )}
+                )
 
-                {/* Pessoas (se coletiva) - apenas para despesas */}
-                {showExpenseFields && isCollective && (
+            case "people-section":
+                return (
                     <View style={styles.formGroup}>
                         <View style={styles.peopleHeader}>
                             <Text style={styles.label}>Divisão por Pessoa</Text>
@@ -433,39 +456,57 @@ const AddTransactionScreen = () => {
                             Total dividido: R$ {calculateCollectiveTotal().toFixed(2).replace(".", ",")}
                         </Text>
                     </View>
-                )}
+                )
 
-                {/* Observações */}
-                <View style={styles.formGroup}>
-                    <Text style={styles.label}>Observações</Text>
-                    <TextInput
-                        style={[styles.input, styles.notesInput]}
-                        placeholder="Observações adicionais"
-                        placeholderTextColor="#777"
-                        value={notes}
-                        onChangeText={setNotes}
-                        multiline
-                        numberOfLines={3}
-                        textAlignVertical="top"
-                    />
-                </View>
+            case "notes":
+                return (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Observações</Text>
+                        <TextInput
+                            style={[styles.input, styles.notesInput]}
+                            placeholder="Observações adicionais"
+                            placeholderTextColor="#777"
+                            value={notes}
+                            onChangeText={setNotes}
+                            multiline
+                            numberOfLines={3}
+                            textAlignVertical="top"
+                        />
+                    </View>
+                )
 
-                {/* Botão Salvar */}
-                <TouchableOpacity
-                    style={[styles.submitButton, isSaving && styles.submitButtonDisabled]}
-                    onPress={handleSubmit}
-                    disabled={isSaving}
-                >
-                    {isSaving ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                        <>
-                            {isEditMode ? <Save color="#fff" size={20} /> : <Plus color="#fff" size={20} />}
-                            <Text style={styles.submitButtonText}>{isEditMode ? "Salvar Alterações" : "Adicionar Transação"}</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            </ScrollView>
+            case "submit":
+                return (
+                    <TouchableOpacity
+                        style={[styles.submitButton, isSaving && styles.submitButtonDisabled]}
+                        onPress={handleSubmit}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? (
+                            <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                            <>
+                                {isEditMode ? <Save color="#fff" size={20} /> : <Plus color="#fff" size={20} />}
+                                <Text style={styles.submitButtonText}>{isEditMode ? "Salvar Alterações" : "Adicionar Transação"}</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                )
+
+            default:
+                return null
+        }
+    }
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={formData}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            />
         </SafeAreaView>
     )
 }
@@ -492,8 +533,9 @@ const styles = StyleSheet.create({
         marginLeft: 16,
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         padding: 16,
+        paddingTop: 0,
     },
     formGroup: {
         marginBottom: 20,

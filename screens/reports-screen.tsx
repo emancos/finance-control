@@ -6,10 +6,10 @@ import {
     Text,
     StyleSheet,
     SafeAreaView,
-    ScrollView,
     TouchableOpacity,
     ActivityIndicator,
     Dimensions,
+    FlatList,
 } from "react-native"
 import { TrendingUp, TrendingDown, DollarSign, Calendar, PieChart, BarChart3 } from "lucide-react-native"
 import { useTransactions } from "../hooks/use-transactions"
@@ -106,9 +106,169 @@ const ReportsScreen = () => {
         </View>
     )
 
+    // Preparar dados para FlatList
+    const reportsData = [
+        { type: "header", id: "header" },
+        { type: "period-selector", id: "period-selector" },
+        { type: "stats-grid", id: "stats-grid" },
+        { type: "detailed-stats", id: "detailed-stats" },
+        ...(categoryTotals.length > 0 ? [{ type: "category-section", id: "category-section" }] : []),
+        { type: "insights-section", id: "insights-section" },
+    ]
+
+    const renderItem = ({ item }: { item: any }) => {
+        switch (item.type) {
+            case "header":
+                return (
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>Relatórios Financeiros</Text>
+                    </View>
+                )
+
+            case "period-selector":
+                return (
+                    <View style={styles.periodSelector}>
+                        {periods.map((period) => (
+                            <TouchableOpacity
+                                key={period.value}
+                                style={[styles.periodButton, selectedPeriod === period.value && styles.periodButtonActive]}
+                                onPress={() => setSelectedPeriod(period.value)}
+                            >
+                                <Text
+                                    style={[styles.periodButtonText, selectedPeriod === period.value && styles.periodButtonTextActive]}
+                                >
+                                    {period.label}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )
+
+            case "stats-grid":
+                return (
+                    <View style={styles.statsGrid}>
+                        <StatCard
+                            title="Receitas"
+                            value={formatCurrency(reportData.totalIncome)}
+                            icon={TrendingUp}
+                            color="#4caf50"
+                            subtitle="Total de entradas"
+                        />
+
+                        <StatCard
+                            title="Despesas"
+                            value={formatCurrency(reportData.totalExpenses)}
+                            icon={TrendingDown}
+                            color="#f44336"
+                            subtitle="Total de saídas"
+                        />
+
+                        <StatCard
+                            title="Saldo"
+                            value={formatCurrency(reportData.balance)}
+                            icon={DollarSign}
+                            color={reportData.balance >= 0 ? "#4caf50" : "#f44336"}
+                            subtitle={reportData.balance >= 0 ? "Saldo positivo" : "Saldo negativo"}
+                        />
+
+                        <StatCard
+                            title="Transações"
+                            value={reportData.transactionCount.toString()}
+                            icon={Calendar}
+                            color="#00bfa5"
+                            subtitle="Total de movimentações"
+                        />
+                    </View>
+                )
+
+            case "detailed-stats":
+                return (
+                    <View style={styles.detailedStats}>
+                        <Text style={styles.sectionTitle}>Análise Detalhada</Text>
+
+                        <View style={styles.detailCard}>
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Gasto Médio por Transação</Text>
+                                <Text style={styles.detailValue}>{formatCurrency(reportData.averageTransaction)}</Text>
+                            </View>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Maior Gasto Individual</Text>
+                                <Text style={[styles.detailValue, styles.expenseValue]}>
+                                    {formatCurrency(reportData.biggestExpense)}
+                                </Text>
+                            </View>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Categoria Mais Utilizada</Text>
+                                <Text style={[styles.detailValue, styles.categoryValue]}>{reportData.mostUsedCategory}</Text>
+                            </View>
+
+                            <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Taxa de Poupança</Text>
+                                <Text style={[styles.detailValue, { color: reportData.balance >= 0 ? "#4caf50" : "#f44336" }]}>
+                                    {reportData.totalIncome > 0
+                                        ? `${((reportData.balance / reportData.totalIncome) * 100).toFixed(1)}%`
+                                        : "0%"}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                )
+
+            case "category-section":
+                return (
+                    <View style={styles.categorySection}>
+                        <Text style={styles.sectionTitle}>Distribuição por Categoria</Text>
+                        <CategoryCarousel
+                            categories={categoryTotals.slice(0, 5)} // Mostrar apenas top 5
+                            onCategoryPress={() => { }} // Não navegar, apenas visualizar
+                        />
+                    </View>
+                )
+
+            case "insights-section":
+                return (
+                    <View style={styles.insightsSection}>
+                        <Text style={styles.sectionTitle}>Insights Financeiros</Text>
+
+                        <View style={styles.insightCard}>
+                            <PieChart color="#00bfa5" size={24} />
+                            <View style={styles.insightContent}>
+                                <Text style={styles.insightTitle}>Análise de Gastos</Text>
+                                <Text style={styles.insightText}>
+                                    {reportData.totalExpenses > reportData.totalIncome * 0.8
+                                        ? "Seus gastos estão altos. Considere revisar suas despesas."
+                                        : "Seus gastos estão controlados. Continue assim!"}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.insightCard}>
+                            <BarChart3 color="#00bfa5" size={24} />
+                            <View style={styles.insightContent}>
+                                <Text style={styles.insightTitle}>Meta de Poupança</Text>
+                                <Text style={styles.insightText}>
+                                    {reportData.balance > 0
+                                        ? `Parabéns! Você conseguiu poupar ${formatCurrency(reportData.balance)} este período.`
+                                        : "Tente estabelecer uma meta de poupança mensal para melhorar suas finanças."}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                )
+
+            default:
+                return null
+        }
+    }
+
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Relatórios Financeiros</Text>
+                </View>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#00bfa5" />
                     <Text style={styles.loadingText}>Carregando relatórios...</Text>
@@ -119,132 +279,13 @@ const ReportsScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Relatórios Financeiros</Text>
-            </View>
-
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Seletor de Período */}
-                <View style={styles.periodSelector}>
-                    {periods.map((period) => (
-                        <TouchableOpacity
-                            key={period.value}
-                            style={[styles.periodButton, selectedPeriod === period.value && styles.periodButtonActive]}
-                            onPress={() => setSelectedPeriod(period.value)}
-                        >
-                            <Text style={[styles.periodButtonText, selectedPeriod === period.value && styles.periodButtonTextActive]}>
-                                {period.label}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                {/* Cards de Estatísticas Principais */}
-                <View style={styles.statsGrid}>
-                    <StatCard
-                        title="Receitas"
-                        value={formatCurrency(reportData.totalIncome)}
-                        icon={TrendingUp}
-                        color="#4caf50"
-                        subtitle="Total de entradas"
-                    />
-
-                    <StatCard
-                        title="Despesas"
-                        value={formatCurrency(reportData.totalExpenses)}
-                        icon={TrendingDown}
-                        color="#f44336"
-                        subtitle="Total de saídas"
-                    />
-
-                    <StatCard
-                        title="Saldo"
-                        value={formatCurrency(reportData.balance)}
-                        icon={DollarSign}
-                        color={reportData.balance >= 0 ? "#4caf50" : "#f44336"}
-                        subtitle={reportData.balance >= 0 ? "Saldo positivo" : "Saldo negativo"}
-                    />
-
-                    <StatCard
-                        title="Transações"
-                        value={reportData.transactionCount.toString()}
-                        icon={Calendar}
-                        color="#00bfa5"
-                        subtitle="Total de movimentações"
-                    />
-                </View>
-
-                {/* Estatísticas Detalhadas */}
-                <View style={styles.detailedStats}>
-                    <Text style={styles.sectionTitle}>Análise Detalhada</Text>
-
-                    <View style={styles.detailCard}>
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Gasto Médio por Transação</Text>
-                            <Text style={styles.detailValue}>{formatCurrency(reportData.averageTransaction)}</Text>
-                        </View>
-
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Maior Gasto Individual</Text>
-                            <Text style={[styles.detailValue, styles.expenseValue]}>{formatCurrency(reportData.biggestExpense)}</Text>
-                        </View>
-
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Categoria Mais Utilizada</Text>
-                            <Text style={[styles.detailValue, styles.categoryValue]}>{reportData.mostUsedCategory}</Text>
-                        </View>
-
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Taxa de Poupança</Text>
-                            <Text style={[styles.detailValue, { color: reportData.balance >= 0 ? "#4caf50" : "#f44336" }]}>
-                                {reportData.totalIncome > 0
-                                    ? `${((reportData.balance / reportData.totalIncome) * 100).toFixed(1)}%`
-                                    : "0%"}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Gastos por Categoria */}
-                {categoryTotals.length > 0 && (
-                    <View style={styles.categorySection}>
-                        <Text style={styles.sectionTitle}>Distribuição por Categoria</Text>
-                        <CategoryCarousel
-                            categories={categoryTotals.slice(0, 5)} // Mostrar apenas top 5
-                            onCategoryPress={() => { }} // Não navegar, apenas visualizar
-                        />
-                    </View>
-                )}
-
-                {/* Insights e Dicas */}
-                <View style={styles.insightsSection}>
-                    <Text style={styles.sectionTitle}>Insights Financeiros</Text>
-
-                    <View style={styles.insightCard}>
-                        <PieChart color="#00bfa5" size={24} />
-                        <View style={styles.insightContent}>
-                            <Text style={styles.insightTitle}>Análise de Gastos</Text>
-                            <Text style={styles.insightText}>
-                                {reportData.totalExpenses > reportData.totalIncome * 0.8
-                                    ? "Seus gastos estão altos. Considere revisar suas despesas."
-                                    : "Seus gastos estão controlados. Continue assim!"}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.insightCard}>
-                        <BarChart3 color="#00bfa5" size={24} />
-                        <View style={styles.insightContent}>
-                            <Text style={styles.insightTitle}>Meta de Poupança</Text>
-                            <Text style={styles.insightText}>
-                                {reportData.balance > 0
-                                    ? `Parabéns! Você conseguiu poupar ${formatCurrency(reportData.balance)} este período.`
-                                    : "Tente estabelecer uma meta de poupança mensal para melhorar suas finanças."}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-            </ScrollView>
+            <FlatList
+                data={reportsData}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            />
         </SafeAreaView>
     )
 }
@@ -266,8 +307,9 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     content: {
-        flex: 1,
+        flexGrow: 1,
         padding: 16,
+        paddingTop: 0,
     },
     periodSelector: {
         flexDirection: "row",

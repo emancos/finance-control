@@ -4,12 +4,14 @@ import { useState, useEffect } from "react"
 import {
   View,
   StyleSheet,
-  ScrollView,
   SafeAreaView,
+  TouchableOpacity,
   ActivityIndicator,
   Text,
   Alert,
+  FlatList,
 } from "react-native"
+import { Settings } from "lucide-react-native"
 import { RefreshControl } from "react-native"
 
 import Header from "../components/header"
@@ -93,6 +95,79 @@ const DashboardScreen = () => {
     navigation.navigate("TransactionDetail", { transaction })
   }
 
+  // Preparar dados para FlatList
+  const dashboardData = [
+    { type: "header", id: "header" },
+    { type: "financial-cards", id: "financial-cards", data: financialSummary },
+    ...(categoryTotals.length > 0 ? [{ type: "category-carousel", id: "category-carousel", data: categoryTotals }] : []),
+    { type: "transactions-header", id: "transactions-header" },
+    ...transactions.map((transaction, index) => ({
+      type: "transaction",
+      id: `transaction-${transaction.id || index}`,
+      data: transaction,
+    })),
+    ...(transactions.length === 0 ? [{ type: "empty-transactions", id: "empty-transactions" }] : []),
+  ]
+
+  const renderItem = ({ item }: { item: any }) => {
+    switch (item.type) {
+      case "header":
+        return (
+          <View style={styles.headerContainer}>
+            <Header name={userData.name} />
+            <TouchableOpacity style={styles.settingsButton} onPress={handleSettings}>
+              <Settings color="#00bfa5" size={24} />
+            </TouchableOpacity>
+          </View>
+        )
+
+      case "financial-cards":
+        return <FinancialCards data={item.data} />
+
+      case "category-carousel":
+        return (
+          <CategoryCarousel
+            categories={item.data}
+            onCategoryPress={handleCategoryPress}
+            onSeeAll={handleSeeAllCategories}
+          />
+        )
+
+      case "transactions-header":
+        return (
+          <View style={styles.transactionsHeaderContainer}>
+            <Text style={styles.transactionsTitle}>Últimas Transações</Text>
+          </View>
+        )
+
+      case "transaction":
+        return (
+          <TouchableOpacity
+            style={styles.transactionRow}
+            onPress={() => handleTransactionPress(item.data)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.transactionDescription}>{item.data.description}</Text>
+            <Text style={[styles.transactionValue, item.data.type === "positive" ? styles.positive : styles.negative]}>
+              {item.data.value}
+            </Text>
+            <Text style={styles.transactionDate}>{item.data.date}</Text>
+          </TouchableOpacity>
+        )
+
+      case "empty-transactions":
+        return (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Nenhuma transação encontrada</Text>
+            <Text style={styles.emptySubtext}>Adicione uma nova transação usando o botão +</Text>
+          </View>
+        )
+
+      default:
+        return null
+    }
+  }
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -107,27 +182,14 @@ const DashboardScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.dashboard}>
-        <View style={styles.headerContainer}>
-          <Header name={userData.name} />
-        </View>
-
-        <ScrollView
+        <FlatList
+          data={dashboardData}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.listContent}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refreshTransactions} tintColor="#00bfa5" />}
-        >
-          <FinancialCards data={financialSummary} />
-
-          {categoryTotals.length > 0 && (
-            <CategoryCarousel
-              categories={categoryTotals}
-              onCategoryPress={handleCategoryPress}
-              onSeeAll={handleSeeAllCategories}
-            />
-          )}
-
-          <TransactionsList transactions={transactions} onTransactionPress={handleTransactionPress} />
-        </ScrollView>
+        />
       </View>
     </SafeAreaView>
   )
@@ -149,9 +211,74 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 28,
   },
-  scrollContent: {
+  settingsButton: {
+    padding: 8,
+  },
+  listContent: {
     flexGrow: 1,
-    paddingBottom: 20, // Espaço extra para a bottom tab
+    paddingBottom: 20,
+  },
+  transactionsHeaderContainer: {
+    backgroundColor: "rgb(40 40 40)",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    marginBottom: 0,
+    elevation: 4,
+  },
+  transactionsTitle: {
+    color: "#00bfa5",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  transactionRow: {
+    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: "rgb(40 40 40)",
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+    marginBottom: 0,
+  },
+  transactionDescription: {
+    flex: 1,
+    fontSize: 15,
+    color: "#ddd",
+  },
+  transactionValue: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  transactionDate: {
+    flex: 0.8,
+    fontSize: 15,
+    color: "#ddd",
+  },
+  positive: {
+    color: "#4caf50",
+  },
+  negative: {
+    color: "#f44336",
+  },
+  emptyContainer: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgb(40 40 40)",
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    elevation: 4,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#e0e0e0",
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#80cbc4",
+    textAlign: "center",
   },
   loadingContainer: {
     flex: 1,
