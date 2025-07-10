@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from "
 export interface CategoryData {
     id: string
     name: string
-    total: number 
+    total: number
     formattedTotal: string
     icon: React.ComponentType<any>
     color: string
@@ -14,12 +14,13 @@ export interface CategoryData {
 interface CategoryCarouselProps {
     categories: CategoryData[]
     onCategoryPress?: (category: CategoryData) => void
+    onSeeAll?: () => void
 }
 
 const { width: screenWidth } = Dimensions.get("window")
 const cardWidth = screenWidth * 0.4 // 40% da largura da tela
 
-const CategoryCarousel = ({ categories, onCategoryPress }: CategoryCarouselProps) => {
+const CategoryCarousel = ({ categories, onCategoryPress, onSeeAll }: CategoryCarouselProps) => {
     const renderCategoryCard = ({ item }: { item: CategoryData }) => {
         const IconComponent = item.icon
 
@@ -54,7 +55,7 @@ const CategoryCarousel = ({ categories, onCategoryPress }: CategoryCarouselProps
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Gastos por Categoria</Text>
-                <TouchableOpacity style={styles.seeAllButton}>
+                <TouchableOpacity style={styles.seeAllButton} onPress={onSeeAll}>
                     <Text style={styles.seeAllText}>Ver todas</Text>
                 </TouchableOpacity>
             </View>
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: "#e0e0e0",
         marginBottom: 4,
+        textTransform: "capitalize",
     },
     categoryTotal: {
         fontSize: 18,
