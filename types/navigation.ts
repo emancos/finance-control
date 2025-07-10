@@ -2,10 +2,12 @@ import type { Transaction, CategoryTotal } from "./transaction"
 
 export type RootStackParamList = {
     Login: undefined
+    Register: undefined
     Main: undefined
     TransactionDetail: { transaction: Transaction }
     AddTransaction: { transaction?: Transaction }
     CategoryTransactions: { category: CategoryTotal }
+    Profile: undefined
 }
 
 export type TabParamList = {
