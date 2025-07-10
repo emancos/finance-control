@@ -1,8 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, Text } from "react-native"
-import { Plus } from "lucide-react-native"
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Text,
+  Alert,
+} from "react-native"
+import { Plus, Settings } from "lucide-react-native"
 import { RefreshControl } from "react-native"
 
 import Header from "../components/header"
@@ -11,12 +20,14 @@ import TransactionsList from "../components/transactions-list"
 import { useNavigation } from "@react-navigation/native"
 import CategoryCarousel from "../components/category-carousel"
 import { useTransactions } from "../hooks/use-transactions"
+import { useSettings } from "../hooks/use-settings"
 import { formatCurrency } from "../utils/format-currency"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 const DashboardScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>()
-  const { transactions, categoryTotals, isLoading, refreshTransactions } = useTransactions()
+  const { transactions, categoryTotals, isLoading: transactionsLoading, refreshTransactions } = useTransactions()
+  const { settings, isLoading: settingsLoading } = useSettings()
   const [financialSummary, setFinancialSummary] = useState([
     { title: "Salário Disponível", amount: "R$ 0,00", type: "positive" as const },
     { title: "Saldo Devedor", amount: "R$ 0,00", type: "negative" as const },
@@ -27,40 +38,45 @@ const DashboardScreen = () => {
     name: "Emanuel",
   }
 
-  // Calcular resumo financeiro com base nas transações
+  const isLoading = transactionsLoading || settingsLoading
+
+  // Calcular resumo financeiro com base nas transações e configurações
   useEffect(() => {
-    if (transactions.length > 0) {
-      let income = 0
-      let expenses = 0
-      let debt = 0
+    let income = 0
+    let expenses = 0
+    let pendingDebt = 0
 
-      transactions.forEach((transaction) => {
-        const value = Number.parseFloat(transaction.value.replace(/[^\d,-]/g, "").replace(",", "."))
+    transactions.forEach((transaction) => {
+      const value = Number.parseFloat(transaction.value.replace(/[^\d,-]/g, "").replace(",", "."))
 
-        if (transaction.type === "positive") {
-          income += value
-        } else {
-          expenses += Math.abs(value)
+      if (transaction.type === "positive") {
+        income += value
+      } else {
+        expenses += Math.abs(value)
 
-          // Se for parcelado, adicionar ao saldo devedor
-          if (
-            transaction.paymentMethod?.includes("Parcelado") &&
-            transaction.installments &&
-            transaction.installments > 1
-          ) {
-            const installmentValue = Number.parseFloat(transaction.installmentValue?.replace(",", ".") || "0")
-            debt += installmentValue * (transaction.installments - 1)
-          }
+        // Calcular saldo devedor (parcelas pendentes)
+        if (transaction.installments && transaction.installments > 1) {
+          const installmentValue = Number.parseFloat(transaction.installmentValue?.replace(",", ".") || "0")
+          // Assumindo que ainda restam parcelas a pagar (simplificado)
+          pendingDebt += installmentValue * (transaction.installments - 1)
         }
-      })
+      }
+    })
 
-      setFinancialSummary([
-        { title: "Salário Disponível", amount: formatCurrency(income - expenses), type: "positive" as const },
-        { title: "Saldo Devedor", amount: formatCurrency(debt), type: "negative" as const },
-        { title: "Resumo Gastos", amount: formatCurrency(expenses), type: "negative" as const },
-      ])
-    }
-  }, [transactions])
+    // Usar salário configurado se disponível
+    const totalIncome = settings.salary > 0 ? settings.salary : income
+    const availableSalary = totalIncome - expenses
+
+    setFinancialSummary([
+      {
+        title: "Salário Disponível",
+        amount: formatCurrency(availableSalary),
+        type: availableSalary >= 0 ? "positive" : "negative",
+      },
+      { title: "Saldo Devedor", amount: formatCurrency(pendingDebt), type: "negative" as const },
+      { title: "Resumo Gastos", amount: formatCurrency(expenses), type: "negative" as const },
+    ])
+  }, [transactions, settings.salary])
 
   const handleAddTransaction = () => {
     navigation.navigate("AddTransaction" as never)
@@ -69,6 +85,14 @@ const DashboardScreen = () => {
   const handleCategoryPress = (category: any) => {
     // TODO: Navigate to category details screen
     console.log("Category pressed:", category.name)
+  }
+
+  const handleSeeAllCategories = () => {
+    navigation.navigate("CategoryList" as never)
+  }
+
+  const handleSettings = () => {
+    navigation.navigate("Settings" as never)
   }
 
   const handleTransactionPress = (transaction: any) => {
@@ -89,7 +113,12 @@ const DashboardScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.dashboard}>
-        <Header name={userData.name} />
+        <View style={styles.headerContainer}>
+          <Header name={userData.name} />
+          <TouchableOpacity style={styles.settingsButton} onPress={handleSettings}>
+            <Settings color="#00bfa5" size={24} />
+          </TouchableOpacity>
+        </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -99,7 +128,11 @@ const DashboardScreen = () => {
           <FinancialCards data={financialSummary} />
 
           {categoryTotals.length > 0 && (
-            <CategoryCarousel categories={categoryTotals} onCategoryPress={handleCategoryPress} />
+            <CategoryCarousel
+              categories={categoryTotals}
+              onCategoryPress={handleCategoryPress}
+              onSeeAll={handleSeeAllCategories}
+            />
           )}
 
           <TransactionsList transactions={transactions} onTransactionPress={handleTransactionPress} />
@@ -123,6 +156,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     paddingBottom: 16,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  settingsButton: {
+    padding: 8,
   },
   scrollContent: {
     flexGrow: 1,
@@ -152,6 +194,20 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: "#00bfa5",
+  },
+  seedButton: {
+    backgroundColor: "#333",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#555",
+  },
+  seedButtonText: {
+    color: "#00bfa5",
+    fontSize: 14,
+    fontWeight: "500",
   },
 })
 
