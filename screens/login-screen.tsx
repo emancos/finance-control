@@ -17,14 +17,21 @@ import {
 import { useNavigation } from "@react-navigation/native"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react-native"
 import { useAuth } from "../hooks/use-auth"
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin"
+
+// Um componente simples para o ícone do Google
+const GoogleIcon = () => (
+    <Image source={{ uri: "https://www.citypng.com/public/uploads/preview/google-logo-icon-gsuite-hd-701751694791470gzbayltphh.png" }} style={{ width: 24, height: 24 }} />
+)
 
 const LoginScreen = () => {
     const navigation = useNavigation()
-    const { login } = useAuth()
+    const { login, loginWithGoogle } = useAuth() // Adicionado loginWithGoogle
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false) // Estado de loading para o Google
 
     const handleLogin = async () => {
         if (!email.trim()) {
@@ -52,6 +59,39 @@ const LoginScreen = () => {
             Alert.alert("Erro", "Ocorreu um erro inesperado. Tente novamente.")
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const handleGoogleLogin = async () => {
+        setIsGoogleLoading(true);
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+
+            const googleUser = {
+                name: userInfo.data?.user.name as string,
+                email: userInfo.data?.user.email as string,
+                profileImage: userInfo.data?.user.photo as string,
+            };
+
+            const result = await loginWithGoogle(googleUser);
+
+            if (result.success) {
+                navigation.navigate("Main" as never);
+            } else {
+                Alert.alert("Erro no Login com Google", result.message);
+            }
+        } catch (error: any) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                Alert.alert("Erro", "Google Play Services não está disponível ou está desatualizado.");
+            } else {
+                console.error(error);
+                Alert.alert("Erro", "Ocorreu um erro ao tentar fazer login com o Google.");
+            }
+        } finally {
+            setIsGoogleLoading(false);
         }
     }
 
@@ -114,6 +154,30 @@ const LoginScreen = () => {
                             <ActivityIndicator color="#fff" size="small" />
                         ) : (
                             <Text style={styles.buttonText}>Entrar</Text>
+                        )}
+                    </TouchableOpacity>
+
+                    {/* Divisor */}
+                    <View style={styles.dividerContainer}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>OU</Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    {/* Botão Google */}
+                    <TouchableOpacity
+                        style={[styles.googleButton, isGoogleLoading && styles.buttonDisabled]}
+                        onPress={handleGoogleLogin}
+                        disabled={isGoogleLoading}
+                        activeOpacity={0.8}
+                    >
+                        {isGoogleLoading ? (
+                            <ActivityIndicator color="#121212" size="small" />
+                        ) : (
+                            <>
+                                <GoogleIcon />
+                                <Text style={styles.googleButtonText}>Entrar com Google</Text>
+                            </>
                         )}
                     </TouchableOpacity>
 
@@ -196,10 +260,8 @@ const styles = StyleSheet.create({
         padding: 16,
         alignItems: "center",
         marginTop: 8,
-        marginBottom: 24,
     },
     buttonDisabled: {
-        backgroundColor: "#006156",
         opacity: 0.7,
     },
     buttonText: {
@@ -207,10 +269,40 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
+    dividerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginVertical: 24,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: "#333",
+    },
+    dividerText: {
+        marginHorizontal: 16,
+        color: "#80cbc4",
+        fontWeight: "500",
+    },
+    googleButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 16,
+        gap: 12,
+    },
+    googleButtonText: {
+        color: "#121212",
+        fontSize: 16,
+        fontWeight: "600",
+    },
     registerLinkContainer: {
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
+        marginTop: 24,
     },
     registerLinkText: {
         fontSize: 14,
