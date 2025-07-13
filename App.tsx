@@ -10,9 +10,14 @@ import TransactionDetailScreen from "./screens/transaction-detail-screen"
 import AddTransactionScreen from "./screens/add-transaction-screen"
 import CategoryTransactionsScreen from "./screens/category-transactions-screen"
 import type { RootStackParamList } from "./types/navigation"
+import { GoogleSignin } from "@react-native-google-signin/google-signin"
 
 // Create the stack navigator
 const Stack = createNativeStackNavigator<RootStackParamList>()
+
+GoogleSignin.configure({
+    webClientId: process.env.EXPO_WEB_CLIENT_ID,
+});
 
 export default function App() {
     return (
