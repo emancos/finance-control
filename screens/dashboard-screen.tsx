@@ -16,17 +16,16 @@ import { RefreshControl } from "react-native"
 
 import Header from "../components/header"
 import FinancialCards from "../components/financial-card"
-import TransactionsList from "../components/transactions-list"
 import { useNavigation } from "@react-navigation/native"
 import CategoryCarousel from "../components/category-carousel"
 import { useTransactions } from "../hooks/use-transactions"
 import { useSettings } from "../hooks/use-settings"
 import { formatCurrency } from "../utils/format-currency"
 import type { CategoryTotal } from "../types/transaction"
-import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { DashboardScreenNavigationProp } from "../types/navigation"
 
 const DashboardScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>()
+  const navigation = useNavigation<DashboardScreenNavigationProp>()
   const { transactions, categoryTotals, isLoading: transactionsLoading, refreshTransactions } = useTransactions()
   const { settings, isLoading: settingsLoading } = useSettings()
   const [financialSummary, setFinancialSummary] = useState([

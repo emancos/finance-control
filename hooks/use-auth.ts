@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from "react"
 import { AuthService } from "../services/auth-service"
 import type { UserProfile } from "../types/user"
 
+interface GoogleUser {
+    name: string
+    email: string
+    profileImage?: string
+}
+
 export function useAuth() {
     const [user, setUser] = useState<UserProfile | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -28,6 +34,16 @@ export function useAuth() {
     // Login
     const login = useCallback(async (email: string, password: string) => {
         const result = await AuthService.login(email, password)
+        if (result.success && result.user) {
+            setUser(result.user)
+            setIsAuthenticated(true)
+        }
+        return result
+    }, [])
+
+    // Login com Google
+    const loginWithGoogle = useCallback(async (googleUser: GoogleUser) => {
+        const result = await AuthService.loginWithGoogle(googleUser)
         if (result.success && result.user) {
             setUser(result.user)
             setIsAuthenticated(true)
@@ -86,6 +102,7 @@ export function useAuth() {
         isLoading,
         isAuthenticated,
         login,
+        loginWithGoogle, // Exporta a nova função
         register,
         logout,
         updateUser,

@@ -3,10 +3,10 @@ import { TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { useTransactions } from "../hooks/use-transactions"
 import type { CategoryTotal } from "../types/transaction"
-import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { RootStackNavigationProp } from "../types/navigation"
 
 const CategoryListScreen = () => {
-    const navigation = useNavigation<NativeStackNavigationProp<any>>()
+    const navigation = useNavigation<RootStackNavigationProp>()
     const { categoryTotals, isLoading } = useTransactions()
 
     const handleCategoryPress = (category: CategoryTotal) => {

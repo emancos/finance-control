@@ -21,7 +21,7 @@ import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-si
 
 // Um componente simples para o ícone do Google
 const GoogleIcon = () => (
-    <Image source={{ uri: "https://www.citypng.com/public/uploads/preview/google-logo-icon-gsuite-hd-701751694791470gzbayltphh.png" }} style={{ width: 24, height: 24 }} />
+    <Image source={{ uri: "https://cdn1.iconfinder.com/data/icons/logos-brands-in-colors/544/Google__G__Logo-512.png" }} style={{ width: 24, height: 24 }} />
 )
 
 const LoginScreen = () => {

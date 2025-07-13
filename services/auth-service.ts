@@ -4,6 +4,12 @@ import type { User, UserProfile } from "../types/user"
 const USERS_STORAGE_KEY = "@finance_app:users"
 const CURRENT_USER_KEY = "@finance_app:current_user"
 
+interface GoogleUser {
+    name: string
+    email: string
+    profileImage?: string
+}
+
 /**
  * Serviço de autenticação local
  */
@@ -78,6 +84,60 @@ export const AuthService = {
         } catch (error) {
             console.error("Erro ao fazer login:", error)
             return { success: false, message: "Erro interno. Tente novamente." }
+        }
+    },
+
+    /**
+     * Faz login ou registra um usuário vindo do Google
+     */
+    async loginWithGoogle(
+        googleUser: GoogleUser,
+    ): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+        try {
+            const users = await this.getAllUsers()
+            const existingUser = users.find((u) => u.email.toLowerCase() === googleUser.email.toLowerCase())
+
+            if (existingUser) {
+                // Usuário já existe, apenas faz login
+                const userToLogin = {
+                    ...existingUser,
+                    // Atualiza a foto do perfil se houver uma nova do Google
+                    profileImage: googleUser.profileImage || existingUser.profileImage,
+                    updatedAt: Date.now(),
+                }
+
+                // Atualiza a lista de usuários com a nova foto
+                const updatedUsers = users.map(u => u.id === userToLogin.id ? userToLogin : u);
+                await AsyncStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+
+
+                const userProfile = this.userToProfile(userToLogin)
+                await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userProfile))
+
+                return { success: true, message: "Login com Google realizado com sucesso!", user: userProfile }
+            } else {
+                // Usuário não existe, cria uma nova conta
+                const newUser: User = {
+                    id: Date.now().toString(),
+                    name: googleUser.name,
+                    email: googleUser.email.toLowerCase(),
+                    password: `google_auth_${Date.now()}`, // Senha aleatória, já que o login será via Google
+                    profileImage: googleUser.profileImage,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                }
+
+                const updatedUsers = [...users, newUser]
+                await AsyncStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers))
+
+                const userProfile = this.userToProfile(newUser)
+                await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userProfile))
+
+                return { success: true, message: "Conta criada com Google com sucesso!", user: userProfile }
+            }
+        } catch (error) {
+            console.error("Erro no login com Google:", error)
+            return { success: false, message: "Erro interno ao tentar login com Google." }
         }
     },
 

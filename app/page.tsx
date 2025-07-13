@@ -1,7 +1,12 @@
 import App from "../App"
+import { TransactionsProvider } from "../hooks/use-transactions"
 
 const Page = () => {
-    return <App />
+    return (
+        <TransactionsProvider>
+            <App />
+        </TransactionsProvider>
+    )
 }
 
 export default Page

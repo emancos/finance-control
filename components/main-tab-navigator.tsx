@@ -2,12 +2,14 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { Home, PieChart, Plus, BarChart3, Settings } from "lucide-react-native"
 import DashboardScreen from "../screens/dashboard-screen"
 import CategoryListScreen from "../screens/category-list-screen"
-import AddTransactionScreen from "../screens/add-transaction-screen"
 import ReportsScreen from "../screens/reports-screen"
 import SettingsScreen from "../screens/settings-screen"
 import type { TabParamList } from "../types/navigation"
+import { View } from "react-native"
 
 const Tab = createBottomTabNavigator<TabParamList>()
+
+const DummyScreen = () => <View />;
 
 const MainTabNavigator = () => {
     return (
@@ -53,8 +55,8 @@ const MainTabNavigator = () => {
             />
 
             <Tab.Screen
-                name="AddTransaction"
-                component={AddTransactionScreen}
+                name="Add"
+                component={DummyScreen}
                 options={{
                     tabBarLabel: "Nova",
                     tabBarIcon: ({ color, size, focused }) => (
@@ -69,6 +71,14 @@ const MainTabNavigator = () => {
                         />
                     ),
                 }}
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                        // Previne a ação padrão (que seria ir para a DummyScreen)
+                        e.preventDefault();
+                        // Navega para a tela modal no navegador pai (RootStack)
+                        navigation.getParent()?.navigate('AddTransaction');
+                    },
+                })}
             />
 
             <Tab.Screen

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { Transaction } from "../types/transaction"
+import { RootStackNavigationProp } from "../types/navigation"
 
 interface TransactionsListProps {
     transactions: Transaction[]
@@ -9,7 +9,7 @@ interface TransactionsListProps {
 }
 
 const TransactionsList = ({ transactions, onTransactionPress }: TransactionsListProps) => {
-    const navigation = useNavigation<NativeStackNavigationProp<any>>()
+    const navigation = useNavigation<RootStackNavigationProp>()
 
     const handleTransactionPress = (transaction: Transaction) => {
         if (onTransactionPress) {
