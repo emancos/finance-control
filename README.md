@@ -41,8 +41,12 @@ Este projeto foi construído utilizando tecnologias modernas para o desenvolvime
     ```bash
     npm install
     ```
-4.  **Inicie o servidor de desenvolvimento do Expo (É necessário um Virtual Device Manager configurado):**
+4.  **Instale as dependências:**
     ```bash
-    npx expo run:android
+    npm install
+    ```
+5.  **Crie um arquivo .env.local com a variável de ambiente 'EXPO_WEB_CLIENT_ID' para utilizar login com conta Google:**
+    ```bash
+    EXPO_WEB_CLIENT_ID="APPLICATION_ID.apps.googleusercontent.com"
     ```
 5.  **Use o aplicativo Expo Go** no seu celular para escanear o QR Code gerado no terminal.
