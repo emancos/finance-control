@@ -1,11 +1,14 @@
 import App from "../App"
 import { TransactionsProvider } from "../hooks/use-transactions"
+import { SettingsProvider } from "../hooks/use-settings"
 
 const Page = () => {
     return (
-        <TransactionsProvider>
-            <App />
-        </TransactionsProvider>
+        <SettingsProvider>
+            <TransactionsProvider>
+                <App />
+            </TransactionsProvider>
+        </SettingsProvider>
     )
 }
 

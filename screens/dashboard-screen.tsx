@@ -42,6 +42,10 @@ const DashboardScreen = () => {
 
   // Calcular resumo financeiro com base nas transações e configurações
   useEffect(() => {
+    if (!settings) {
+      return
+    }
+
     let income = 0
     let expenses = 0
     let pendingDebt = 0
@@ -76,7 +80,7 @@ const DashboardScreen = () => {
       { title: "Saldo Devedor", amount: formatCurrency(pendingDebt), type: "negative" as const },
       { title: "Resumo Gastos", amount: formatCurrency(expenses), type: "negative" as const },
     ])
-  }, [transactions, settings.salary])
+  }, [transactions, settings])
 
   const handleCategoryPress = (category: CategoryTotal) => {
     navigation.navigate("CategoryTransactions", { category })
@@ -98,14 +102,14 @@ const DashboardScreen = () => {
   const dashboardData = [
     { type: "header", id: "header" },
     { type: "financial-cards", id: "financial-cards", data: financialSummary },
-    ...(categoryTotals.length > 0 ? [{ type: "category-carousel", id: "category-carousel", data: categoryTotals }] : []),
+    ...(categoryTotals && categoryTotals.length > 0 ? [{ type: "category-carousel", id: "category-carousel", data: categoryTotals }] : []),
     { type: "transactions-header", id: "transactions-header" },
-    ...transactions.map((transaction, index) => ({
+    ...(transactions ? transactions.map((transaction, index) => ({
       type: "transaction",
       id: `transaction-${transaction.id || index}`,
       data: transaction,
-    })),
-    ...(transactions.length === 0 ? [{ type: "empty-transactions", id: "empty-transactions" }] : []),
+    })) : []),
+    ...(transactions && transactions.length === 0 ? [{ type: "empty-transactions", id: "empty-transactions" }] : []),
   ]
 
   const renderItem = ({ item }: { item: any }) => {

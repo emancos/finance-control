@@ -1,9 +1,20 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react"
 import { SettingsService, type AppSettings } from "../services/settings-service"
 
-export function useSettings() {
+interface SettingsContextData {
+    settings: AppSettings
+    isLoading: boolean
+    error: string | null
+    updateSalary: (salary: number) => Promise<boolean>
+    saveSettings: (newSettings: Partial<AppSettings>) => Promise<boolean>
+    refreshSettings: () => Promise<void>
+}
+
+const SettingsContext = createContext<SettingsContextData | null>(null)
+
+export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const [settings, setSettings] = useState<AppSettings>({
         salary: 0,
         currency: "BRL",
@@ -33,6 +44,7 @@ export function useSettings() {
         async (salary: number) => {
             try {
                 await SettingsService.updateSalary(salary)
+                // Recarrega as configurações para atualizar o estado global
                 await loadSettings()
                 return true
             } catch (err) {
@@ -49,6 +61,7 @@ export function useSettings() {
         async (newSettings: Partial<AppSettings>) => {
             try {
                 await SettingsService.saveSettings(newSettings)
+                // Recarrega as configurações para atualizar o estado global
                 await loadSettings()
                 return true
             } catch (err) {
@@ -65,12 +78,27 @@ export function useSettings() {
         loadSettings()
     }, [loadSettings])
 
-    return {
-        settings,
-        isLoading,
-        error,
-        updateSalary,
-        saveSettings,
-        refreshSettings: loadSettings,
+    return (
+        <SettingsContext.Provider
+            value={{
+                settings,
+                isLoading,
+                error,
+                updateSalary,
+                saveSettings,
+                refreshSettings: loadSettings,
+            }
+            }
+        >
+            {children}
+        </SettingsContext.Provider>
+    )
+}
+
+export function useSettings(): SettingsContextData {
+    const context = useContext(SettingsContext)
+    if (context === null) {
+        throw new Error("useSettings deve ser usado dentro de um SettingsProvider. Verifique a árvore de componentes.")
     }
+    return context
 }

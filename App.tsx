@@ -1,49 +1,66 @@
-import { NavigationContainer } from "@react-navigation/native"
-import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import { StatusBar } from "react-native"
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { RootStackParamList } from './types/navigation';
 
-import LoginScreen from "./screens/login-screen"
-import RegisterScreen from "./screens/register-screen"
-import ProfileScreen from "./screens/profile-screen"
-import MainTabNavigator from "./components/main-tab-navigator"
-import TransactionDetailScreen from "./screens/transaction-detail-screen"
-import AddTransactionScreen from "./screens/add-transaction-screen"
-import CategoryTransactionsScreen from "./screens/category-transactions-screen"
-import type { RootStackParamList } from "./types/navigation"
-import { GoogleSignin } from "@react-native-google-signin/google-signin"
+import { SettingsProvider } from './hooks/use-settings';
+import { TransactionsProvider } from './hooks/use-transactions';
 
-// Create the stack navigator
-const Stack = createNativeStackNavigator<RootStackParamList>()
+import MainTabNavigator from './components/main-tab-navigator';
+import LoginScreen from './screens/login-screen';
+import RegisterScreen from './screens/register-screen';
+import TransactionDetailScreen from './screens/transaction-detail-screen';
+import AddTransactionScreen from './screens/add-transaction-screen';
+import CategoryTransactionsScreen from './screens/category-transactions-screen';
+import ProfileScreen from './screens/profile-screen';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-GoogleSignin.configure({
-    webClientId: process.env.EXPO_WEB_CLIENT_ID,
-});
+// Cria o Stack Navigator principal
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
-export default function App() {
+// Componente que envolve toda a aplicação com os provedores
+const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-        <NavigationContainer>
-            <StatusBar barStyle="light-content" backgroundColor="#121212" />
-            <Stack.Navigator
-                initialRouteName="Login"
-                screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: "#121212" },
-                }}
-            >
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="Register" component={RegisterScreen} />
-                <Stack.Screen name="Main" component={MainTabNavigator} />
-                <Stack.Screen name="Profile" component={ProfileScreen} />
-                <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
-                <Stack.Screen
-                    name="AddTransaction"
-                    component={AddTransactionScreen}
-                    options={{
-                        presentation: "modal", // Apresentar como modal quando chamado do stack
+        <SettingsProvider>
+            <TransactionsProvider>
+                {children}
+            </TransactionsProvider>
+        </SettingsProvider>
+    );
+};
+
+// Componente principal da aplicação com a estrutura de navegação
+const App = () => {
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: process.env.EXPO_WEB_CLIENT_ID,
+        });
+    }, []);
+
+    return (
+        <AppProviders>
+            <NavigationContainer>
+                <RootStack.Navigator
+                    initialRouteName="Login"
+                    screenOptions={{
+                        headerShown: false,
                     }}
-                />
-                <Stack.Screen name="CategoryTransactions" component={CategoryTransactionsScreen} />
-            </Stack.Navigator>
-        </NavigationContainer>
-    )
-}
+                >
+                    <RootStack.Screen name="Login" component={LoginScreen} />
+                    <RootStack.Screen name="Register" component={RegisterScreen} />
+                    <RootStack.Screen name="Main" component={MainTabNavigator} />
+                    <RootStack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
+                    <RootStack.Screen name="CategoryTransactions" component={CategoryTransactionsScreen} />
+                    <RootStack.Screen name="Profile" component={ProfileScreen} />
+                    <RootStack.Screen
+                        name="AddTransaction"
+                        component={AddTransactionScreen}
+                        options={{ presentation: 'modal' }}
+                    />
+                </RootStack.Navigator>
+            </NavigationContainer>
+        </AppProviders>
+    );
+};
+
+export default App;

@@ -23,10 +23,10 @@ const SettingsScreen = () => {
     const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
-        if (settings.salary > 0) {
+        if (settings && settings.salary > 0) {
             setSalary(settings.salary.toString().replace(".", ","))
         }
-    }, [settings.salary])
+    }, [settings])
 
     const handleSaveSalary = async () => {
         if (!salary.trim()) {
@@ -94,7 +94,7 @@ const SettingsScreen = () => {
                                 Configure seu salário mensal para cálculos automáticos de saldo disponível
                             </Text>
 
-                            {settings.salary > 0 && (
+                            {settings && settings.salary > 0 && (
                                 <View style={styles.currentSalaryContainer}>
                                     <Text style={styles.currentSalaryLabel}>Salário atual:</Text>
                                     <Text style={styles.currentSalaryValue}>{formatSalaryDisplay(settings.salary)}</Text>
