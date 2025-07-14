@@ -41,8 +41,8 @@ Este projeto foi construído utilizando tecnologias modernas para o desenvolvime
     ```bash
     npm install
     ```
-4.  **Inicie o servidor de desenvolvimento do Expo:**
+4.  **Inicie o servidor de desenvolvimento do Expo (É necessário um Virtual Device Manager configurado):**
     ```bash
-    npx expo start
+    npx expo run:android
     ```
 5.  **Use o aplicativo Expo Go** no seu celular para escanear o QR Code gerado no terminal.
